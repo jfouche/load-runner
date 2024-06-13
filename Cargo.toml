@@ -1,0 +1,25 @@
+[package]
+name = "load-runner"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+resolver = "2" # Important! wgpu/Bevy needs this!
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.dev]
+opt-level = 1
+
+[profile.release]
+lto = true
+codegen-units = 1
+
+[dependencies]
+bevy = "0.13"
+bevy_rapier2d = "0.26.0"
+bevy_ecs_ldtk = { git = "https://github.com/Trouv/bevy_ecs_ldtk" }
+
+[patch.crates-io]
+bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap/", branch = "main" }
