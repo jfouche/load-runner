@@ -491,7 +491,7 @@ dependencies = [
 [[package]]
 name = "bevy_ecs_ldtk"
 version = "0.9.0"
-source = "git+https://github.com/Trouv/bevy_ecs_ldtk#617b108dfc22799047cdb4d2c84c3cdfba7e985a"
+source = "git+https://github.com/Trouv/bevy_ecs_ldtk?rev=617b108#617b108dfc22799047cdb4d2c84c3cdfba7e985a"
 dependencies = [
  "bevy",
  "bevy_ecs_ldtk_macros",
@@ -510,7 +510,7 @@ dependencies = [
 [[package]]
 name = "bevy_ecs_ldtk_macros"
 version = "0.9.0"
-source = "git+https://github.com/Trouv/bevy_ecs_ldtk#617b108dfc22799047cdb4d2c84c3cdfba7e985a"
+source = "git+https://github.com/Trouv/bevy_ecs_ldtk?rev=617b108#617b108dfc22799047cdb4d2c84c3cdfba7e985a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -532,7 +532,7 @@ dependencies = [
 [[package]]
 name = "bevy_ecs_tilemap"
 version = "0.12.0"
-source = "git+https://github.com/StarArawn/bevy_ecs_tilemap/?branch=main#e4f3cc668110d9a46f6fe407db4f6d4daeabc3d2"
+source = "git+https://github.com/StarArawn/bevy_ecs_tilemap/?rev=e4f3cc6#e4f3cc668110d9a46f6fe407db4f6d4daeabc3d2"
 dependencies = [
  "bevy",
  "log",

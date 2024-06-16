@@ -1,62 +1,48 @@
 use crate::components::*;
 use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
-
+use bevy_rapier2d::prelude::*;
 use std::collections::{HashMap, HashSet};
 
-use bevy_rapier2d::prelude::*;
+const ASPECT_RATIO: f32 = 16. / 9.;
 
-pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn level_plugin(app: &mut App) {
+    app.add_plugins(LdtkPlugin)
+        .insert_resource(LevelSelection::Uid(0))
+        .insert_resource(LdtkSettings {
+            level_spawn_behavior: LevelSpawnBehavior::UseWorldTranslation {
+                load_level_neighbors: true,
+            },
+            set_clear_color: SetClearColor::FromLevelBackground,
+            ..Default::default()
+        })
+        .register_ldtk_int_cell::<WallBundle>(1)
+        .register_ldtk_int_cell::<LadderBundle>(2)
+        .register_ldtk_int_cell::<WallBundle>(3)
+        .register_ldtk_entity::<PlayerBundle>("Player")
+        .register_ldtk_entity::<MobBundle>("Mob")
+        .register_ldtk_entity::<ChestBundle>("Chest")
+        .add_systems(Startup, (spawn_camera, spawn_level))
+        .add_systems(Update, spawn_wall_collision)
+        .add_systems(Update, camera_fit_inside_current_level)
+        .add_systems(Update, update_level_selection)
+        .add_systems(Update, spawn_ground_sensor)
+        .add_systems(Update, ground_detection)
+        .add_systems(Update, update_on_ground)
+        .add_systems(Update, restart_level);
+}
+
+fn spawn_camera(mut commands: Commands) {
     let camera = Camera2dBundle::default();
     commands.spawn(camera);
+}
 
+fn spawn_level(mut commands: Commands, asset_server: Res<AssetServer>) {
     let ldtk_handle = asset_server.load("load-runner.ldtk");
     commands.spawn(LdtkWorldBundle {
         ldtk_handle,
         ..Default::default()
     });
-}
-
-pub fn dbg_player_items(
-    input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&Items, &EntityInstance), With<Player>>,
-) {
-    for (items, entity_instance) in &mut query {
-        if input.just_pressed(KeyCode::KeyP) {
-            dbg!(&items);
-            dbg!(&entity_instance);
-        }
-    }
-}
-
-pub fn movement(
-    input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Velocity, &mut Climber, &GroundDetection), With<Player>>,
-) {
-    for (mut velocity, mut climber, ground_detection) in &mut query {
-        let right = if input.pressed(KeyCode::KeyD) { 1. } else { 0. };
-        let left = if input.pressed(KeyCode::KeyQ) { 1. } else { 0. };
-
-        velocity.linvel.x = (right - left) * 200.;
-
-        if climber.intersecting_climbables.is_empty() {
-            climber.climbing = false;
-        } else if input.just_pressed(KeyCode::KeyZ) || input.just_pressed(KeyCode::KeyS) {
-            climber.climbing = true;
-        }
-
-        if climber.climbing {
-            let up = if input.pressed(KeyCode::KeyZ) { 1. } else { 0. };
-            let down = if input.pressed(KeyCode::KeyS) { 1. } else { 0. };
-
-            velocity.linvel.y = (up - down) * 200.;
-        }
-
-        if input.just_pressed(KeyCode::Space) && (ground_detection.on_ground || climber.climbing) {
-            velocity.linvel.y = 500.;
-            climber.climbing = false;
-        }
-    }
 }
 
 /// Spawns heron collisions for the walls of a level
@@ -75,7 +61,7 @@ pub fn movement(
 /// 2. combine wall tiles into flat "plates" in each individual row
 /// 3. combine the plates into rectangles across multiple rows wherever possible
 /// 4. spawn colliders for each rectangle
-pub fn spawn_wall_collision(
+fn spawn_wall_collision(
     mut commands: Commands,
     wall_query: Query<(&GridCoords, &Parent), Added<Wall>>,
     parent_query: Query<&Parent, Without<Wall>>,
@@ -227,92 +213,8 @@ pub fn spawn_wall_collision(
         });
     }
 }
-
-pub fn detect_climb_range(
-    mut climbers: Query<&mut Climber>,
-    climbables: Query<Entity, With<Climbable>>,
-    mut collisions: EventReader<CollisionEvent>,
-) {
-    for collision in collisions.read() {
-        match collision {
-            CollisionEvent::Started(collider_a, collider_b, _) => {
-                if let (Ok(mut climber), Ok(climbable)) =
-                    (climbers.get_mut(*collider_a), climbables.get(*collider_b))
-                {
-                    climber.intersecting_climbables.insert(climbable);
-                }
-                if let (Ok(mut climber), Ok(climbable)) =
-                    (climbers.get_mut(*collider_b), climbables.get(*collider_a))
-                {
-                    climber.intersecting_climbables.insert(climbable);
-                };
-            }
-            CollisionEvent::Stopped(collider_a, collider_b, _) => {
-                if let (Ok(mut climber), Ok(climbable)) =
-                    (climbers.get_mut(*collider_a), climbables.get(*collider_b))
-                {
-                    climber.intersecting_climbables.remove(&climbable);
-                }
-
-                if let (Ok(mut climber), Ok(climbable)) =
-                    (climbers.get_mut(*collider_b), climbables.get(*collider_a))
-                {
-                    climber.intersecting_climbables.remove(&climbable);
-                }
-            }
-        }
-    }
-}
-
-pub fn ignore_gravity_if_climbing(
-    mut query: Query<(&Climber, &mut GravityScale), Changed<Climber>>,
-) {
-    for (climber, mut gravity_scale) in &mut query {
-        if climber.climbing {
-            gravity_scale.0 = 0.0;
-        } else {
-            gravity_scale.0 = 1.0;
-        }
-    }
-}
-
-pub fn patrol(mut query: Query<(&mut Transform, &mut Velocity, &mut Patrol)>) {
-    for (mut transform, mut velocity, mut patrol) in &mut query {
-        if patrol.points.len() <= 1 {
-            continue;
-        }
-
-        let mut new_velocity =
-            (patrol.points[patrol.index] - transform.translation.truncate()).normalize() * 75.;
-
-        if new_velocity.dot(velocity.linvel) < 0. {
-            if patrol.index == 0 {
-                patrol.forward = true;
-            } else if patrol.index == patrol.points.len() - 1 {
-                patrol.forward = false;
-            }
-
-            transform.translation.x = patrol.points[patrol.index].x;
-            transform.translation.y = patrol.points[patrol.index].y;
-
-            if patrol.forward {
-                patrol.index += 1;
-            } else {
-                patrol.index -= 1;
-            }
-
-            new_velocity =
-                (patrol.points[patrol.index] - transform.translation.truncate()).normalize() * 75.;
-        }
-
-        velocity.linvel = new_velocity;
-    }
-}
-
-const ASPECT_RATIO: f32 = 16. / 9.;
-
 #[allow(clippy::type_complexity)]
-pub fn camera_fit_inside_current_level(
+fn camera_fit_inside_current_level(
     mut camera_query: Query<
         (
             &mut bevy::render::camera::OrthographicProjection,
@@ -376,7 +278,7 @@ pub fn camera_fit_inside_current_level(
     }
 }
 
-pub fn update_level_selection(
+fn update_level_selection(
     level_query: Query<(&LevelIid, &Transform), Without<Player>>,
     player_query: Query<&Transform, With<Player>>,
     mut level_selection: ResMut<LevelSelection>,
@@ -413,7 +315,7 @@ pub fn update_level_selection(
     }
 }
 
-pub fn spawn_ground_sensor(
+fn spawn_ground_sensor(
     mut commands: Commands,
     detect_ground_for: Query<(Entity, &Collider), Added<GroundDetection>>,
 ) {
@@ -445,7 +347,7 @@ pub fn spawn_ground_sensor(
     }
 }
 
-pub fn ground_detection(
+fn ground_detection(
     mut ground_sensors: Query<&mut GroundSensor>,
     mut collisions: EventReader<CollisionEvent>,
     collidables: Query<Entity, (With<Collider>, Without<Sensor>)>,
@@ -478,7 +380,7 @@ pub fn ground_detection(
     }
 }
 
-pub fn update_on_ground(
+fn update_on_ground(
     mut ground_detectors: Query<&mut GroundDetection>,
     ground_sensors: Query<&GroundSensor, Changed<GroundSensor>>,
 ) {
@@ -489,7 +391,7 @@ pub fn update_on_ground(
     }
 }
 
-pub fn restart_level(
+fn restart_level(
     mut commands: Commands,
     level_query: Query<Entity, With<LevelIid>>,
     input: Res<ButtonInput<KeyCode>>,

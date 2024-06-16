@@ -10,7 +10,7 @@
 	},
 	"iid": "39227760-c640-11ed-bac6-0b5f56187457",
 	"jsonVersion": "1.5.3",
-	"appBuildId": 473738,
+	"appBuildId": 473703,
 	"nextUid": 107,
 	"identifierStyle": "Capitalize",
 	"toc": [],
@@ -1927,41 +1927,6 @@
 					"tilesetUid": null
 				}
 			]
-		},
-		{
-			"identifier": "Pumpkins",
-			"uid": 106,
-			"tags": [],
-			"exportToToc": false,
-			"allowOutOfBounds": false,
-			"doc": null,
-			"width": 48,
-			"height": 16,
-			"resizableX": false,
-			"resizableY": false,
-			"minWidth": null,
-			"maxWidth": null,
-			"minHeight": null,
-			"maxHeight": null,
-			"keepAspectRatio": false,
-			"tileOpacity": 1,
-			"fillOpacity": 0.08,
-			"lineOpacity": 0,
-			"hollow": false,
-			"color": "#BE4A2F",
-			"renderMode": "Tile",
-			"showName": true,
-			"tilesetId": 105,
-			"tileRenderMode": "FitInside",
-			"tileRect": { "tilesetUid": 105, "x": 128, "y": 320, "w": 96, "h": 32 },
-			"uiTileRect": null,
-			"nineSliceBorders": [],
-			"maxCount": 0,
-			"limitScope": "PerLevel",
-			"limitBehavior": "MoveLastOne",
-			"pivotX": 0.5,
-			"pivotY": 1,
-			"fieldDefs": []
 		}
 	], "tilesets": [
 		{
@@ -2205,22 +2170,6 @@
 							"fieldInstances": [{ "__identifier": "locked", "__type": "Bool", "__value": false, "__tile": null, "defUid": 87, "realEditorValues": [] }],
 							"__worldX": 568,
 							"__worldY": 128
-						},
-						{
-							"__identifier": "Pumpkins",
-							"__grid": [42,17],
-							"__pivot": [0.5,1],
-							"__tags": [],
-							"__tile": { "tilesetUid": 105, "x": 128, "y": 320, "w": 96, "h": 32 },
-							"__smartColor": "#BE4A2F",
-							"iid": "6f7e6760-9f30-11ed-b47d-6b8c4f8b2877",
-							"width": 48,
-							"height": 16,
-							"defUid": 106,
-							"px": [680,288],
-							"fieldInstances": [],
-							"__worldX": 680,
-							"__worldY": 288
 						}
 					]
 				},
