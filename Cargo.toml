@@ -20,6 +20,7 @@ codegen-units = 1
 bevy = "0.13"
 bevy_rapier2d = "0.26.0"
 bevy_ecs_ldtk = { git = "https://github.com/Trouv/bevy_ecs_ldtk", rev="617b108"}
+bevy-inspector-egui="0.24.0"
 
 [patch.crates-io]
 bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap/", rev = "e4f3cc6" }

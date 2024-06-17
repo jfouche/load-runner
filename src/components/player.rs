@@ -5,13 +5,14 @@ use bevy_ecs_ldtk::prelude::*;
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
 pub struct Player;
 
-#[derive(Clone, Default, Bundle, LdtkEntity)]
+#[derive(Clone, Bundle, LdtkEntity)]
 pub struct PlayerBundle {
+    pub player: Player,
+    pub name: Name,
     #[sprite_bundle("player.png")]
     pub sprite_bundle: SpriteBundle,
     #[from_entity_instance]
     pub collider_bundle: ColliderBundle,
-    pub player: Player,
     #[worldly]
     pub worldly: Worldly,
     pub climber: Climber,
@@ -24,4 +25,14 @@ pub struct PlayerBundle {
     // The whole EntityInstance can be stored directly as an EntityInstance component
     #[from_entity_instance]
     entity_instance: EntityInstance,
+}
+
+impl Default for PlayerBundle {
+    fn default() -> Self {
+        info!("PlayerBundle::default()");
+        PlayerBundle {
+            name: Name::new("Player"),
+            ..default()
+        }
+    }
 }

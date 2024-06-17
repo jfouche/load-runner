@@ -31,7 +31,7 @@ impl LdtkEntity for Patrol {
 
         let ldtk_patrol_points = entity_instance
             .iter_points_field("patrol")
-            .expect("patrol field should be correclty typed");
+            .expect("patrol field should be correctly typed");
 
         for ldtk_point in ldtk_patrol_points {
             // The +1 is necessary here due to the pivot of the entities in the sample

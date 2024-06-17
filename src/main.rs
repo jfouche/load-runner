@@ -12,8 +12,14 @@ mod player_plugin;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
-        .add_plugins((RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0),))
+        .add_plugins((
+            DefaultPlugins.set(ImagePlugin::default_nearest()),
+            RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0),
+        ))
+        .add_plugins((
+            bevy_inspector_egui::quick::WorldInspectorPlugin::new(),
+            RapierDebugRenderPlugin::default(),
+        ))
         .insert_resource(RapierConfiguration::new(100.0))
         .add_plugins((
             level_plugin::level_plugin,

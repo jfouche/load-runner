@@ -6,9 +6,31 @@ use std::collections::HashSet;
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
 pub struct Wall;
 
+/// A simple rectangle type representing a wall of any size
+pub struct WallRect {
+    pub left: i32,
+    pub right: i32,
+    pub top: i32,
+    pub bottom: i32,
+}
+
 #[derive(Clone, Debug, Default, Bundle, LdtkIntCell)]
 pub struct WallBundle {
     wall: Wall,
+}
+
+#[derive(Bundle)]
+pub struct WallColliderBundle {
+    collider: Collider,
+    body: RigidBody,
+    friction: Friction,
+    transform: TransformBundle,
+}
+
+impl WallColliderBundle {
+    pub fn new(wall_rect: WallRect) -> Self {
+        todo!()
+    }
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
@@ -19,11 +41,6 @@ pub struct LadderBundle {
     #[from_int_grid_cell]
     pub sensor_bundle: SensorBundle,
     pub climbable: Climbable,
-}
-
-#[derive(Clone, Default, Component)]
-pub struct GroundDetection {
-    pub on_ground: bool,
 }
 
 #[derive(Component)]
@@ -88,14 +105,12 @@ impl From<&EntityInstance> for ColliderBundle {
 
 impl From<IntGridCell> for SensorBundle {
     fn from(int_grid_cell: IntGridCell) -> SensorBundle {
-        let rotation_constraints = LockedAxes::ROTATION_LOCKED;
-
         // ladder
         if int_grid_cell.value == 2 {
             SensorBundle {
                 collider: Collider::cuboid(8., 8.),
                 sensor: Sensor,
-                rotation_constraints,
+                rotation_constraints: LockedAxes::ROTATION_LOCKED,
                 active_events: ActiveEvents::COLLISION_EVENTS,
             }
         } else {

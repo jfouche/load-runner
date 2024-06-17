@@ -26,7 +26,6 @@ pub fn level_plugin(app: &mut App) {
         .add_systems(Update, spawn_wall_collision)
         .add_systems(Update, camera_fit_inside_current_level)
         .add_systems(Update, update_level_selection)
-        .add_systems(Update, spawn_ground_sensor)
         .add_systems(Update, ground_detection)
         .add_systems(Update, update_on_ground)
         .add_systems(Update, restart_level);
@@ -75,14 +74,6 @@ fn spawn_wall_collision(
     struct Plate {
         left: i32,
         right: i32,
-    }
-
-    /// A simple rectangle type representing a wall of any size
-    struct Rect {
-        left: i32,
-        right: i32,
-        top: i32,
-        bottom: i32,
     }
 
     // Consider where the walls are
@@ -151,9 +142,9 @@ fn spawn_wall_collision(
                 }
 
                 // combine "plates" into rectangles across multiple rows
-                let mut rect_builder: HashMap<Plate, Rect> = HashMap::new();
+                let mut rect_builder: HashMap<Plate, WallRect> = HashMap::new();
                 let mut prev_row: Vec<Plate> = Vec::new();
-                let mut wall_rects: Vec<Rect> = Vec::new();
+                let mut wall_rects: Vec<WallRect> = Vec::new();
 
                 // an extra empty row so the algorithm "finishes" the rects that touch the top edge
                 plate_stack.push(Vec::new());
@@ -170,8 +161,8 @@ fn spawn_wall_collision(
                     for plate in &current_row {
                         rect_builder
                             .entry(plate.clone())
-                            .and_modify(|e| e.top += 1)
-                            .or_insert(Rect {
+                            .and_modify(|wr| wr.top += 1)
+                            .or_insert(WallRect {
                                 bottom: y as i32,
                                 top: y as i32,
                                 left: plate.left,
@@ -187,26 +178,25 @@ fn spawn_wall_collision(
                     // 1. Adjusts the transforms to be relative to the level for free
                     // 2. the colliders will be despawned automatically when levels unload
                     for wall_rect in wall_rects {
-                        level
-                            .spawn_empty()
-                            .insert(Collider::cuboid(
-                                (wall_rect.right as f32 - wall_rect.left as f32 + 1.)
-                                    * grid_size as f32
-                                    / 2.,
-                                (wall_rect.top as f32 - wall_rect.bottom as f32 + 1.)
-                                    * grid_size as f32
-                                    / 2.,
-                            ))
-                            .insert(RigidBody::Fixed)
-                            .insert(Friction::new(1.0))
-                            .insert(Transform::from_xyz(
-                                (wall_rect.left + wall_rect.right + 1) as f32 * grid_size as f32
-                                    / 2.,
-                                (wall_rect.bottom + wall_rect.top + 1) as f32 * grid_size as f32
-                                    / 2.,
-                                0.,
-                            ))
-                            .insert(GlobalTransform::default());
+                        let collider = Collider::cuboid(
+                            (wall_rect.right as f32 - wall_rect.left as f32 + 1.)
+                                * grid_size as f32
+                                / 2.,
+                            (wall_rect.top as f32 - wall_rect.bottom as f32 + 1.)
+                                * grid_size as f32
+                                / 2.,
+                        );
+                        let transform = Transform::from_xyz(
+                            (wall_rect.left + wall_rect.right + 1) as f32 * grid_size as f32 / 2.,
+                            (wall_rect.bottom + wall_rect.top + 1) as f32 * grid_size as f32 / 2.,
+                            0.,
+                        );
+                        level.spawn((
+                            collider,
+                            RigidBody::Fixed,
+                            Friction::new(1.0),
+                            TransformBundle::from_transform(transform),
+                        ));
                     }
                 });
             }
@@ -285,15 +275,14 @@ fn update_level_selection(
     ldtk_projects: Query<&Handle<LdtkProject>>,
     ldtk_project_assets: Res<Assets<LdtkProject>>,
 ) {
-    for (level_iid, level_transform) in &level_query {
-        let ldtk_project = ldtk_project_assets
-            .get(ldtk_projects.single())
-            .expect("Project should be loaded if level has spawned");
+    let ldtk_project = ldtk_project_assets
+        .get(ldtk_projects.single())
+        .expect("Project should be loaded if level has spawned");
 
+    for (level_iid, level_transform) in &level_query {
         let level = ldtk_project
             .get_raw_level_by_iid(&level_iid.to_string())
             .expect("Spawned level should exist in LDtk project");
-
         let level_bounds = Rect {
             min: Vec2::new(level_transform.translation.x, level_transform.translation.y),
             max: Vec2::new(
@@ -311,38 +300,6 @@ fn update_level_selection(
             {
                 *level_selection = LevelSelection::iid(level.iid.clone());
             }
-        }
-    }
-}
-
-fn spawn_ground_sensor(
-    mut commands: Commands,
-    detect_ground_for: Query<(Entity, &Collider), Added<GroundDetection>>,
-) {
-    for (entity, shape) in &detect_ground_for {
-        if let Some(cuboid) = shape.as_cuboid() {
-            let Vec2 {
-                x: half_extents_x,
-                y: half_extents_y,
-            } = cuboid.half_extents();
-
-            let detector_shape = Collider::cuboid(half_extents_x / 2.0, 2.);
-
-            let sensor_translation = Vec3::new(0., -half_extents_y, 0.);
-
-            commands.entity(entity).with_children(|builder| {
-                builder
-                    .spawn_empty()
-                    .insert(ActiveEvents::COLLISION_EVENTS)
-                    .insert(detector_shape)
-                    .insert(Sensor)
-                    .insert(Transform::from_translation(sensor_translation))
-                    .insert(GlobalTransform::default())
-                    .insert(GroundSensor {
-                        ground_detection_entity: entity,
-                        intersecting_ground_entities: HashSet::new(),
-                    });
-            });
         }
     }
 }
