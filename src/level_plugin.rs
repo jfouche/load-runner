@@ -205,15 +205,13 @@ fn camera_fit_inside_current_level(
         ..
     }) = player_query.get_single()
     {
-        let player_translation = *player_translation;
-
         let (mut orthographic_projection, mut camera_transform) = camera_query.single_mut();
 
-        for (level_transform, level_iid) in &level_query {
-            let ldtk_project = ldtk_project_assets
-                .get(ldtk_projects.single())
-                .expect("Project should be loaded if level has spawned");
+        let ldtk_project = ldtk_project_assets
+            .get(ldtk_projects.single())
+            .expect("Project should be loaded if level has spawned");
 
+        for (level_transform, level_iid) in &level_query {
             let level = ldtk_project
                 .get_raw_level_by_iid(&level_iid.to_string())
                 .expect("Spawned level should exist in LDtk project");

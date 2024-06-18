@@ -26,8 +26,8 @@ fn spawn_ground_sensor(
     mut commands: Commands,
     detect_ground_for: Query<(Entity, &Collider), Added<GroundDetection>>,
 ) {
-    for (entity, shape) in &detect_ground_for {
-        if let Some(cuboid) = shape.as_cuboid() {
+    for (entity, collider) in &detect_ground_for {
+        if let Some(cuboid) = collider.as_cuboid() {
             commands.entity(entity).with_children(|builder| {
                 let Vec2 {
                     x: half_extents_x,
@@ -54,11 +54,14 @@ fn movement(
     input: Res<ButtonInput<KeyCode>>,
     mut query: Query<(&mut Velocity, &mut Climber, &GroundDetection), With<Player>>,
 ) {
+    const MOVE_SPEED: f32 = 200.;
+    const JUMP_SPEED: f32 = 400.;
+
     for (mut velocity, mut climber, ground_detection) in &mut query {
         let right = if input.pressed(KeyCode::KeyD) { 1. } else { 0. };
         let left = if input.pressed(KeyCode::KeyA) { 1. } else { 0. };
 
-        velocity.linvel.x = (right - left) * 200.;
+        velocity.linvel.x = (right - left) * MOVE_SPEED;
 
         if climber.intersecting_climbables.is_empty() {
             climber.climbing = false;
@@ -70,11 +73,11 @@ fn movement(
             let up = if input.pressed(KeyCode::KeyW) { 1. } else { 0. };
             let down = if input.pressed(KeyCode::KeyS) { 1. } else { 0. };
 
-            velocity.linvel.y = (up - down) * 200.;
+            velocity.linvel.y = (up - down) * MOVE_SPEED;
         }
 
         if input.just_pressed(KeyCode::Space) && (ground_detection.on_ground || climber.climbing) {
-            velocity.linvel.y = 500.;
+            velocity.linvel.y = JUMP_SPEED;
             climber.climbing = false;
         }
     }

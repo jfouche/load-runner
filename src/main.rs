@@ -27,5 +27,12 @@ fn main() {
             enemy_plugin::enemy_plugin,
             character_plugin::character_plugin,
         ))
+        .add_systems(Update, debug_collisions)
         .run();
+}
+
+fn debug_collisions(mut collisions: EventReader<CollisionEvent>) {
+    for collision in collisions.read() {
+        info!("Collision event: {collision:?}");
+    }
 }
