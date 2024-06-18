@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use crate::components::*;
 use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
@@ -22,6 +20,7 @@ fn dbg_player_items(
     }
 }
 
+/// Spawn a [Sensor] at the bottom of a collider to detect when it is on the ground
 fn spawn_ground_sensor(
     mut commands: Commands,
     detect_ground_for: Query<(Entity, &Collider), Added<GroundDetection>>,
@@ -29,22 +28,7 @@ fn spawn_ground_sensor(
     for (entity, collider) in &detect_ground_for {
         if let Some(cuboid) = collider.as_cuboid() {
             commands.entity(entity).with_children(|builder| {
-                let Vec2 {
-                    x: half_extents_x,
-                    y: half_extents_y,
-                } = cuboid.half_extents();
-
-                builder.spawn((
-                    ActiveEvents::COLLISION_EVENTS,
-                    Collider::cuboid(half_extents_x / 2.0, 2.),
-                    Sensor,
-                    Transform::from_translation(Vec3::new(0., -half_extents_y, 0.)),
-                    GlobalTransform::default(),
-                    GroundSensor {
-                        ground_detection_entity: entity,
-                        intersecting_ground_entities: HashSet::new(),
-                    },
-                ));
+                builder.spawn(GroundSensorCollider::new(entity, cuboid.half_extents()));
             });
         }
     }

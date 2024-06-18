@@ -52,17 +52,55 @@ impl WallColliderBundle {
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
 pub struct Climbable;
 
-#[derive(Clone, Default, Bundle, LdtkIntCell)]
+#[derive(Clone, Bundle, LdtkIntCell)]
 pub struct LadderBundle {
+    name: Name,
     #[from_int_grid_cell]
     pub sensor_bundle: SensorBundle,
     pub climbable: Climbable,
+}
+
+impl Default for LadderBundle {
+    fn default() -> Self {
+        LadderBundle {
+            name: Name::new("Ladder"),
+            sensor_bundle: SensorBundle::default(),
+            climbable: Climbable,
+        }
+    }
 }
 
 #[derive(Component)]
 pub struct GroundSensor {
     pub ground_detection_entity: Entity,
     pub intersecting_ground_entities: HashSet<Entity>,
+}
+
+#[derive(Bundle)]
+pub struct GroundSensorCollider {
+    name: Name,
+    events: ActiveEvents,
+    collider: Collider,
+    sensor: Sensor,
+    transform: TransformBundle,
+    ground_sensor: GroundSensor,
+}
+
+impl GroundSensorCollider {
+    pub fn new(parent: Entity, half_extents: Vec2) -> Self {
+        let pos = Vec3::new(0., -half_extents.y, 0.);
+        GroundSensorCollider {
+            name: Name::new("GroundSensor"),
+            events: ActiveEvents::COLLISION_EVENTS,
+            collider: Collider::cuboid(half_extents.x / 2.0, 2.),
+            sensor: Sensor,
+            transform: TransformBundle::from_transform(Transform::from_translation(pos)),
+            ground_sensor: GroundSensor {
+                ground_detection_entity: parent,
+                intersecting_ground_entities: HashSet::new(),
+            },
+        }
+    }
 }
 
 #[derive(Clone, Default, Bundle, LdtkIntCell)]

@@ -31,8 +31,19 @@ fn main() {
         .run();
 }
 
-fn debug_collisions(mut collisions: EventReader<CollisionEvent>) {
+fn debug_collisions(mut collisions: EventReader<CollisionEvent>, names: Query<DebugName>) {
     for collision in collisions.read() {
-        info!("Collision event: {collision:?}");
+        match collision {
+            CollisionEvent::Started(e1, e2, flag) => {
+                let n1 = names.get(*e1).unwrap();
+                let n2 = names.get(*e2).unwrap();
+                info!("CollisionEvent::Started({n1:?}, {n2:?}, {flag:?})");
+            }
+            CollisionEvent::Stopped(e1, e2, flag) => {
+                let n1 = names.get(*e1).unwrap();
+                let n2 = names.get(*e2).unwrap();
+                info!("CollisionEvent::Stopped({n1:?}, {n2:?}, {flag:?})");
+            }
+        }
     }
 }
