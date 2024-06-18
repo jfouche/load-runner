@@ -1,27 +1,25 @@
 use super::*;
 use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
+use bevy_rapier2d::prelude::*;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
 pub struct Player;
 
 #[derive(Clone, Bundle, LdtkEntity)]
 pub struct PlayerBundle {
-    pub player: Player,
-    pub name: Name,
+    player: Player,
+    name: Name,
     #[sprite_bundle("player.png")]
-    pub sprite_bundle: SpriteBundle,
-    #[from_entity_instance]
-    pub collider_bundle: ColliderBundle,
+    sprite_bundle: SpriteBundle,
+    collider_bundle: ColliderBundle,
     #[worldly]
-    pub worldly: Worldly,
-    pub climber: Climber,
-    pub ground_detection: GroundDetection,
-
+    worldly: Worldly,
+    climber: Climber,
+    ground_detection: GroundDetection,
     // Build Items Component manually by using `impl From<&EntityInstance>`
     #[from_entity_instance]
     items: Items,
-
     // The whole EntityInstance can be stored directly as an EntityInstance component
     #[from_entity_instance]
     entity_instance: EntityInstance,
@@ -29,10 +27,25 @@ pub struct PlayerBundle {
 
 impl Default for PlayerBundle {
     fn default() -> Self {
-        info!("PlayerBundle::default()");
         PlayerBundle {
+            player: Player,
             name: Name::new("Player"),
-            ..default()
+            sprite_bundle: SpriteBundle::default(),
+            collider_bundle: ColliderBundle {
+                collider: Collider::cuboid(6., 14.),
+                rigid_body: RigidBody::Dynamic,
+                friction: Friction {
+                    coefficient: 0.0,
+                    combine_rule: CoefficientCombineRule::Min,
+                },
+                rotation_constraints: LockedAxes::ROTATION_LOCKED,
+                ..Default::default()
+            },
+            worldly: Worldly::default(),
+            climber: Climber::default(),
+            ground_detection: GroundDetection::default(),
+            items: Items::default(),
+            entity_instance: EntityInstance::default(),
         }
     }
 }

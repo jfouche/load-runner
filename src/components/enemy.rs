@@ -1,6 +1,7 @@
 use super::*;
 use bevy::prelude::*;
 use bevy_ecs_ldtk::{prelude::*, utils::ldtk_pixel_coords_to_translation_pivoted};
+use bevy_rapier2d::prelude::*;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
 pub struct Enemy;
@@ -58,13 +59,30 @@ impl LdtkEntity for Patrol {
     }
 }
 
-#[derive(Clone, Default, Bundle, LdtkEntity)]
+#[derive(Clone, Bundle, LdtkEntity)]
 pub struct MobBundle {
+    enemy: Enemy,
+    name: Name,
     #[sprite_sheet_bundle]
-    pub sprite_sheet_bundle: SpriteSheetBundle,
-    #[from_entity_instance]
-    pub collider_bundle: ColliderBundle,
-    pub enemy: Enemy,
+    sprite_sheet_bundle: SpriteSheetBundle,
+    collider_bundle: ColliderBundle,
     #[ldtk_entity]
-    pub patrol: Patrol,
+    patrol: Patrol,
+}
+
+impl Default for MobBundle {
+    fn default() -> Self {
+        MobBundle {
+            enemy: Enemy,
+            name: Name::new("Mob"),
+            sprite_sheet_bundle: SpriteSheetBundle::default(),
+            collider_bundle: ColliderBundle {
+                collider: Collider::cuboid(5., 5.),
+                rigid_body: RigidBody::KinematicVelocityBased,
+                rotation_constraints: LockedAxes::ROTATION_LOCKED,
+                ..Default::default()
+            },
+            patrol: Patrol::default(),
+        }
+    }
 }

@@ -21,6 +21,7 @@ pub struct WallBundle {
 
 #[derive(Bundle)]
 pub struct WallColliderBundle {
+    name: Name,
     collider: Collider,
     body: RigidBody,
     friction: Friction,
@@ -28,8 +29,23 @@ pub struct WallColliderBundle {
 }
 
 impl WallColliderBundle {
-    pub fn new(wall_rect: WallRect) -> Self {
-        todo!()
+    pub fn new(wall_rect: WallRect, grid_size: i32) -> Self {
+        let collider = Collider::cuboid(
+            (wall_rect.right as f32 - wall_rect.left as f32 + 1.) * grid_size as f32 / 2.,
+            (wall_rect.top as f32 - wall_rect.bottom as f32 + 1.) * grid_size as f32 / 2.,
+        );
+        let transform = Transform::from_xyz(
+            (wall_rect.left + wall_rect.right + 1) as f32 * grid_size as f32 / 2.,
+            (wall_rect.bottom + wall_rect.top + 1) as f32 * grid_size as f32 / 2.,
+            0.,
+        );
+        WallColliderBundle {
+            name: Name::new("WallCollider"),
+            collider,
+            body: RigidBody::Fixed,
+            friction: Friction::new(1.0),
+            transform: TransformBundle::from_transform(transform),
+        }
     }
 }
 
@@ -66,41 +82,6 @@ pub struct SensorBundle {
     pub sensor: Sensor,
     pub active_events: ActiveEvents,
     pub rotation_constraints: LockedAxes,
-}
-
-impl From<&EntityInstance> for ColliderBundle {
-    fn from(entity_instance: &EntityInstance) -> ColliderBundle {
-        let rotation_constraints = LockedAxes::ROTATION_LOCKED;
-
-        match entity_instance.identifier.as_ref() {
-            "Player" => ColliderBundle {
-                collider: Collider::cuboid(6., 14.),
-                rigid_body: RigidBody::Dynamic,
-                friction: Friction {
-                    coefficient: 0.0,
-                    combine_rule: CoefficientCombineRule::Min,
-                },
-                rotation_constraints,
-                ..Default::default()
-            },
-            "Mob" => ColliderBundle {
-                collider: Collider::cuboid(5., 5.),
-                rigid_body: RigidBody::KinematicVelocityBased,
-                rotation_constraints,
-                ..Default::default()
-            },
-            "Chest" => ColliderBundle {
-                collider: Collider::cuboid(8., 8.),
-                rigid_body: RigidBody::Dynamic,
-                rotation_constraints,
-                gravity_scale: GravityScale(1.0),
-                friction: Friction::new(0.5),
-                density: ColliderMassProperties::Density(15.0),
-                ..Default::default()
-            },
-            _ => ColliderBundle::default(),
-        }
-    }
 }
 
 impl From<IntGridCell> for SensorBundle {

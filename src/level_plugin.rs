@@ -178,25 +178,7 @@ fn spawn_wall_collision(
                     // 1. Adjusts the transforms to be relative to the level for free
                     // 2. the colliders will be despawned automatically when levels unload
                     for wall_rect in wall_rects {
-                        let collider = Collider::cuboid(
-                            (wall_rect.right as f32 - wall_rect.left as f32 + 1.)
-                                * grid_size as f32
-                                / 2.,
-                            (wall_rect.top as f32 - wall_rect.bottom as f32 + 1.)
-                                * grid_size as f32
-                                / 2.,
-                        );
-                        let transform = Transform::from_xyz(
-                            (wall_rect.left + wall_rect.right + 1) as f32 * grid_size as f32 / 2.,
-                            (wall_rect.bottom + wall_rect.top + 1) as f32 * grid_size as f32 / 2.,
-                            0.,
-                        );
-                        level.spawn((
-                            collider,
-                            RigidBody::Fixed,
-                            Friction::new(1.0),
-                            TransformBundle::from_transform(transform),
-                        ));
+                        level.spawn(WallColliderBundle::new(wall_rect, grid_size));
                     }
                 });
             }
