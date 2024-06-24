@@ -1,4 +1,4 @@
-use crate::components::*;
+use crate::{components::*, schedule::InGameSet, ui::*};
 use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -22,18 +22,50 @@ pub fn level_plugin(app: &mut App) {
         .register_ldtk_entity::<PlayerBundle>("Player")
         .register_ldtk_entity::<MobBundle>("Mob")
         .register_ldtk_entity::<ChestBundle>("Chest")
-        .add_systems(Startup, (spawn_camera, spawn_level))
-        .add_systems(Update, spawn_wall_collision)
-        .add_systems(Update, camera_fit_inside_current_level)
-        .add_systems(Update, update_level_selection)
-        .add_systems(Update, ground_detection)
-        .add_systems(Update, update_on_ground)
-        .add_systems(Update, restart_level);
+        // LoadLevel
+        .add_systems(OnEnter(InGameState::LoadLevel), (show_level, spawn_level))
+        .add_systems(
+            Update,
+            spawn_wall_collision.run_if(in_state(GameState::InGame)),
+        )
+        .add_systems(Update, start_level.run_if(in_state(InGameState::LoadLevel)))
+        // InGame
+        .add_systems(
+            Update,
+            (
+                camera_fit_inside_current_level,
+                update_level_selection,
+                update_on_ground,
+            )
+                .in_set(InGameSet::EntityUpdate),
+        )
+        .add_systems(
+            Update,
+            ground_detection.in_set(InGameSet::CollisionDetection),
+        )
+        .add_systems(Update, restart_level.in_set(InGameSet::UserInput));
 }
 
-fn spawn_camera(mut commands: Commands) {
-    let camera = Camera2dBundle::default();
-    commands.spawn(camera);
+const END_LEVEL_FADE_COLOR: Color = Color::rgba(0.0, 0.0, 0.8, 1.0);
+
+fn show_level(mut commands: Commands) {
+    info!("show_level()");
+    commands.spawn(FaderBundle::new(END_LEVEL_FADE_COLOR, Color::NONE, 2.0));
+}
+
+/// wait for fader to finish, and start running
+fn start_level(
+    mut commands: Commands,
+    mut events: EventReader<FaderFinishEvent>,
+    mut in_game_state: ResMut<NextState<InGameState>>,
+) {
+    for event in events.read() {
+        if let Some(mut cmd) = commands.get_entity(event.entity) {
+            info!("start_level() - despawn({:?})", event.entity);
+            cmd.despawn();
+        }
+        in_game_state.set(InGameState::Running);
+    }
 }
 
 fn spawn_level(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -185,7 +217,7 @@ fn spawn_wall_collision(
         });
     }
 }
-#[allow(clippy::type_complexity)]
+
 fn camera_fit_inside_current_level(
     mut camera_query: Query<
         (

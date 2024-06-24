@@ -1,9 +1,12 @@
-use crate::components::*;
+use crate::{components::*, schedule::InGameSet};
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 pub fn character_plugin(app: &mut App) {
-    app.add_systems(Update, (detect_climb_range, ignore_gravity_if_climbing));
+    app.add_systems(
+        Update,
+        (detect_climb_range, ignore_gravity_if_climbing).in_set(InGameSet::CollisionDetection),
+    );
 }
 
 fn detect_climb_range(

@@ -1,23 +1,10 @@
-use crate::components::*;
+use crate::{components::*, schedule::InGameSet};
 use bevy::prelude::*;
-use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 pub fn player_plugin(app: &mut App) {
     app.add_systems(Update, spawn_ground_sensor)
-        .add_systems(Update, (dbg_player_items, movement));
-}
-
-fn dbg_player_items(
-    input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&Items, &EntityInstance), With<Player>>,
-) {
-    for (items, entity_instance) in &mut query {
-        if input.just_pressed(KeyCode::KeyP) {
-            dbg!(&items);
-            dbg!(&entity_instance);
-        }
-    }
+        .add_systems(Update, movement.in_set(InGameSet::UserInput));
 }
 
 /// Spawn a [Sensor] at the bottom of a collider to detect when it is on the ground
@@ -27,6 +14,7 @@ fn spawn_ground_sensor(
 ) {
     for (entity, collider) in &detect_ground_for {
         if let Some(cuboid) = collider.as_cuboid() {
+            info!("spawn_ground_sensor for {entity:?}");
             commands.entity(entity).with_children(|builder| {
                 builder.spawn(GroundSensorCollider::new(entity, cuboid.half_extents()));
             });

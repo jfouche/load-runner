@@ -4,7 +4,7 @@ use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 #[derive(Clone, Component, Debug, Eq, Default, PartialEq)]
-pub struct Items(Vec<String>);
+pub struct Items(pub Vec<String>);
 
 impl From<&EntityInstance> for Items {
     fn from(entity_instance: &EntityInstance) -> Self {
