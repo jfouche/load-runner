@@ -3,6 +3,7 @@ use bevy::{app::PluginGroupBuilder, prelude::*};
 use bevy_rapier2d::prelude::*;
 
 mod character_plugin;
+mod collisions;
 mod enemy_plugin;
 mod hud_plugin;
 mod item_plugin;
@@ -21,6 +22,7 @@ impl PluginGroup for InGamePlugins {
             .add(level_plugin::level_plugin)
             .add(player_plugin::player_plugin)
             .add(pause_menu::pause_menu_plugin)
+            .add(item_plugin::item_plugin)
             .add(in_game_plugin)
     }
 }
