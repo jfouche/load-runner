@@ -1,5 +1,5 @@
 use crate::{components::*, schedule::InGameSet, ui::*};
-use bevy::prelude::*;
+use bevy::{ecs::query::QuerySingleError, prelude::*};
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 use std::collections::{HashMap, HashSet};
@@ -68,12 +68,26 @@ fn start_level(
     }
 }
 
-fn spawn_level(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let ldtk_handle = asset_server.load("load-runner.ldtk");
-    commands.spawn(LdtkWorldBundle {
-        ldtk_handle,
-        ..Default::default()
-    });
+fn spawn_level(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    ldtk_projects: Query<Entity, With<Handle<LdtkProject>>>,
+) {
+    match ldtk_projects.get_single() {
+        Ok(world_entity) => {
+            // A project is already loaded, respawn it
+            commands.entity(world_entity).insert(Respawn);
+        }
+        Err(QuerySingleError::NoEntities(_)) => {
+            // Spawn a new project
+            let ldtk_handle = asset_server.load("load-runner.ldtk");
+            commands.spawn(LdtkWorldBundle {
+                ldtk_handle,
+                ..Default::default()
+            });
+        }
+        Err(e) => panic!("{e:?}"),
+    }
 }
 
 /// Spawns heron collisions for the walls of a level

@@ -28,7 +28,7 @@ impl PluginGroup for InGamePlugins {
 fn in_game_plugin(app: &mut App) {
     app.add_systems(Startup, stop_physics)
         .add_systems(OnEnter(GameState::InGame), (set_background, grab_cursor))
-        .add_systems(OnExit(GameState::InGame), ungrab_cursor)
+        .add_systems(OnExit(GameState::InGame), (ungrab_cursor, reset_physics))
         .add_systems(OnEnter(InGameState::Running), (grab_cursor, start_physics))
         .add_systems(OnExit(InGameState::Running), (ungrab_cursor, stop_physics))
         .add_systems(Update, switch_to_pause.in_set(InGameSet::UserInput));
@@ -46,8 +46,15 @@ fn switch_to_pause(mut state: ResMut<NextState<InGameState>>, keys: Res<ButtonIn
 
 fn start_physics(mut physics: ResMut<RapierConfiguration>) {
     physics.physics_pipeline_active = true;
+    physics.query_pipeline_active = true;
 }
 
 fn stop_physics(mut physics: ResMut<RapierConfiguration>) {
     physics.physics_pipeline_active = false;
+    physics.query_pipeline_active = false;
+}
+
+fn reset_physics(mut commands: Commands) {
+    commands.insert_resource(Events::<CollisionEvent>::default());
+    commands.insert_resource(Events::<ContactForceEvent>::default());
 }

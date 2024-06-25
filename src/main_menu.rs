@@ -5,7 +5,7 @@ use crate::{
 use bevy::{app::AppExit, prelude::*};
 
 pub fn main_menu_plugin(app: &mut App) {
-    app.add_systems(OnEnter(GameState::Menu), spawn_menu)
+    app.add_systems(OnEnter(GameState::Menu), (set_background, spawn_menu))
         .add_systems(OnExit(GameState::Menu), despawn_all::<MainMenu>)
         .add_systems(
             Update,
@@ -27,6 +27,10 @@ enum MenuButtonAction {
     // BackToSettings,
     ExitApplication,
     // QuitGame,
+}
+
+fn set_background(mut commands: Commands) {
+    commands.insert_resource(ClearColor(Color::GRAY));
 }
 
 fn spawn_menu(mut commands: Commands) {

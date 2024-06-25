@@ -5,7 +5,7 @@ use bevy::prelude::*;
 
 pub fn hud_plugin(app: &mut App) {
     app.add_systems(OnEnter(GameState::InGame), spawn_player_items)
-        .add_systems(OnExit(GameState::InGame), despawn_all::<Player>)
+        .add_systems(OnExit(GameState::InGame), despawn_all::<HudPlayerItems>)
         .add_systems(Update, update_player_items.in_set(InGameSet::EntityUpdate));
 }
 
