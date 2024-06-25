@@ -15,7 +15,7 @@ pub enum InGameState {
     #[default]
     Disabled,
     Running,
-    // Pause,
+    Pause,
     // PlayerEndedLevel,
     // PlayerDied,
     // PlayerFinished,

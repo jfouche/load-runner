@@ -17,7 +17,7 @@ impl FaderBundle {
             node: NodeBundle {
                 style: fullscreen_style(),
                 background_color: from.into(),
-                z_index: ZIndex::Global(-1),
+                z_index: ZIndex::Global(i32::MAX - 1),
                 ..Default::default()
             },
             timer: FadeTimer(Timer::from_seconds(duration_secs, TimerMode::Once)),

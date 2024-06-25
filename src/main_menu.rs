@@ -4,7 +4,7 @@ use crate::{
 };
 use bevy::{app::AppExit, prelude::*};
 
-pub fn menu_plugin(app: &mut App) {
+pub fn main_menu_plugin(app: &mut App) {
     app.add_systems(OnEnter(GameState::Menu), spawn_menu)
         .add_systems(OnExit(GameState::Menu), despawn_all::<MainMenu>)
         .add_systems(

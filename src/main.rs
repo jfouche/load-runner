@@ -8,24 +8,26 @@ mod components;
 mod cursor;
 mod debug;
 mod in_game;
-mod menu;
+mod main_menu;
 mod schedule;
 mod splash;
 mod ui;
+
+const PIXELS_PER_METER: f32 = 100.0;
 
 fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins.set(ImagePlugin::default_nearest()),
-            RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0),
+            RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(PIXELS_PER_METER),
         ))
-        .insert_resource(RapierConfiguration::new(100.0))
+        .insert_resource(RapierConfiguration::new(PIXELS_PER_METER))
         .add_plugins(debug::plugin)
         .add_plugins((
             schedule::schedule_plugin,
             ui::UiPlugins,
             splash::splash_plugin,
-            menu::menu_plugin,
+            main_menu::main_menu_plugin,
             in_game::InGamePlugins,
         ))
         .add_systems(Startup, spawn_camera)
