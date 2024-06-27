@@ -54,5 +54,4 @@ fn update_player_items(
 ) {
     let items = players.get_single().expect("Player");
     let mut text = texts.get_single_mut().expect("HudPlayerItems");
-    text.sections[0].value = items.0.join(" - ");
 }

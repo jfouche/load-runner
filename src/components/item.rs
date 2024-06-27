@@ -3,12 +3,25 @@ use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Item {
+    Unknown,
+    Knife,
+    Boots,
     Key,
 }
 
+impl From<&String> for Item {
+    fn from(value: &String) -> Self {
+        match value.as_str() {
+            "Key" => Item::Key,
+            _ => Item::Unknown,
+        }
+    }
+}
+
 #[derive(Clone, Component, Debug, Eq, Default, PartialEq)]
-pub struct Items(pub Vec<String>);
+pub struct Items(pub Vec<Item>);
 
 impl From<&EntityInstance> for Items {
     fn from(entity_instance: &EntityInstance) -> Self {
@@ -17,7 +30,7 @@ impl From<&EntityInstance> for Items {
             entity_instance
                 .iter_enums_field("items")
                 .expect("items field should be correctly typed")
-                .cloned()
+                .map(|s| s.into())
                 .collect(),
         )
     }
@@ -30,8 +43,8 @@ pub struct Chest;
 pub struct ChestBundle {
     tag: Chest,
     name: Name,
-    // #[from_entity_instance]
-    // items: Items,
+    #[from_entity_instance]
+    items: Items,
     #[sprite_sheet_bundle]
     sprite_sheet_bundle: SpriteSheetBundle,
     collider_bundle: ColliderBundle,
@@ -42,7 +55,7 @@ impl Default for ChestBundle {
         ChestBundle {
             tag: Chest,
             name: Name::new("Chest"),
-            // items: Items::default(),
+            items: Items::default(),
             sprite_sheet_bundle: SpriteSheetBundle::default(),
             collider_bundle: ColliderBundle {
                 collider: Collider::cuboid(8., 8.),
@@ -55,4 +68,10 @@ impl Default for ChestBundle {
             },
         }
     }
+}
+
+#[derive(Resource)]
+pub struct ItemAssets {
+    pub texture: Handle<Image>,
+    pub texture_atlas_layout: Handle<TextureAtlasLayout>,
 }

@@ -13,6 +13,7 @@ pub struct PlayerBundle {
     #[sprite_bundle("player.png")]
     sprite_bundle: SpriteBundle,
     collider_bundle: ColliderBundle,
+    active_events: ActiveEvents,
     #[worldly]
     worldly: Worldly,
     climber: Climber,
@@ -41,6 +42,7 @@ impl Default for PlayerBundle {
                 rotation_constraints: LockedAxes::ROTATION_LOCKED,
                 ..Default::default()
             },
+            active_events: ActiveEvents::COLLISION_EVENTS,
             worldly: Worldly::default(),
             climber: Climber::default(),
             ground_detection: GroundDetection::default(),
