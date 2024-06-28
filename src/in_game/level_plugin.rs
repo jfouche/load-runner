@@ -28,7 +28,10 @@ pub fn level_plugin(app: &mut App) {
             Update,
             spawn_wall_collision.run_if(in_state(GameState::InGame)),
         )
-        .add_systems(Update, start_level.run_if(in_state(InGameState::LoadLevel)))
+        .add_systems(
+            Update,
+            (start_level, camera_fit_inside_current_level).run_if(in_state(InGameState::LoadLevel)),
+        )
         // InGame
         .add_systems(
             Update,
