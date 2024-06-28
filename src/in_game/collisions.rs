@@ -47,6 +47,7 @@ where
 
 /// The [EqEither] trait allow to check if self is equal to either
 /// one value or another
+#[allow(dead_code)]
 pub trait EqEither {
     fn eq_either(&self, v1: Self, v2: Self) -> bool;
 }

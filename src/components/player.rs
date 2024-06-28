@@ -10,6 +10,7 @@ pub struct Player;
 pub struct PlayerBundle {
     player: Player,
     name: Name,
+    life: Life,
     #[sprite_bundle("player.png")]
     sprite_bundle: SpriteBundle,
     collider_bundle: ColliderBundle,
@@ -31,6 +32,7 @@ impl Default for PlayerBundle {
         PlayerBundle {
             player: Player,
             name: Name::new("Player"),
+            life: Life::new(10),
             sprite_bundle: SpriteBundle::default(),
             collider_bundle: ColliderBundle {
                 collider: Collider::cuboid(6., 14.),

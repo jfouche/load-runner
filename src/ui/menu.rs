@@ -115,6 +115,7 @@ pub fn button_system(
 
 /// This system updates the settings when a new value for a setting is selected, and marks
 /// the button as the one currently selected
+#[allow(dead_code)]
 pub fn setting_button<T: Resource + Component + PartialEq + Copy>(
     interaction_query: Query<(&Interaction, &T, Entity), (Changed<Interaction>, With<Button>)>,
     mut selected_query: Query<(Entity, &mut BackgroundColor), (With<SelectedOption>, With<T>)>,
