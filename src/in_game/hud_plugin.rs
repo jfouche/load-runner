@@ -13,45 +13,39 @@ pub fn hud_plugin(app: &mut App) {
 struct HudPlayerItems;
 
 fn spawn_player_items(mut commands: Commands) {
-    commands
-        .spawn((
-            Name::new("HudPlayerItems"),
-            NodeBundle {
-                style: fullscreen_style(),
-                ..Default::default()
+    commands.spawn((
+        Name::new("HudPlayerItems"),
+        HudPlayerItems,
+        NodeBundle {
+            background_color: Color::rgba(0.3, 0.3, 0.3, 0.2).into(),
+            style: Style {
+                top: Val::Px(10.0),
+                left: Val::Px(10.0),
+                ..hsizer().style
             },
-        ))
-        .with_children(|wnd| {
-            wnd.spawn(NodeBundle {
-                background_color: Color::rgba(0.3, 0.3, 0.3, 0.5).into(),
-                style: Style {
-                    top: Val::Px(10.0),
-                    height: Val::Px(64.0),
-                    width: Val::Px(500.0),
-                    ..Default::default()
-                },
-                ..Default::default()
-            });
-        })
-        .with_children(|panel| {
-            panel.spawn((
-                HudPlayerItems,
-                TextBundle::from_section(
-                    "",
-                    TextStyle {
-                        font_size: 16.0,
-                        color: Color::WHITE,
-                        ..Default::default()
-                    },
-                ),
-            ));
-        });
+            ..Default::default()
+        },
+    ));
 }
 
 fn update_player_items(
-    players: Query<&Items, With<Player>>,
-    mut texts: Query<&mut Text, With<HudPlayerItems>>,
+    mut commands: Commands,
+    players: Query<&Items, (With<Player>, Changed<Items>)>,
+    huds: Query<Entity, With<HudPlayerItems>>,
+    assets: Res<ItemAssets>,
 ) {
-    let items = players.get_single().expect("Player");
-    let mut text = texts.get_single_mut().expect("HudPlayerItems");
+    if let Ok(items) = players.get_single() {
+        let hud = huds.get_single().expect("HudPlayerItems");
+
+        // clear all spawned items
+        let mut cmd = commands.entity(hud);
+        cmd.despawn_descendants();
+
+        // add all items
+        cmd.with_children(|parent| {
+            for &item in &items.0 {
+                parent.spawn((Name::new(format!("{item:?}")), assets.image_bundle(item)));
+            }
+        });
+    };
 }

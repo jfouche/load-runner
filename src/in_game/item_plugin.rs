@@ -21,16 +21,6 @@ fn load_assets(
         texture_atlas_layout,
     };
     commands.insert_resource(assets);
-
-    // LATER:
-    // SpriteSheetBundle {
-    //     texture,
-    //     atlas: TextureAtlas {
-    //         layout: texture_atlas_layout,
-    //         index: item.indice,
-    //     },
-    //     ..default()
-    // }
 }
 
 fn open_chest(

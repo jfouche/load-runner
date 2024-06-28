@@ -14,6 +14,8 @@ pub enum Item {
 impl From<&String> for Item {
     fn from(value: &String) -> Self {
         match value.as_str() {
+            "Knife" => Item::Knife,
+            "Boots" => Item::Boots,
             "Key" => Item::Key,
             _ => Item::Unknown,
         }
@@ -25,7 +27,6 @@ pub struct Items(pub Vec<Item>);
 
 impl From<&EntityInstance> for Items {
     fn from(entity_instance: &EntityInstance) -> Self {
-        warn!("Items: {}", entity_instance.identifier);
         Items(
             entity_instance
                 .iter_enums_field("items")
@@ -74,4 +75,23 @@ impl Default for ChestBundle {
 pub struct ItemAssets {
     pub texture: Handle<Image>,
     pub texture_atlas_layout: Handle<TextureAtlasLayout>,
+}
+
+impl ItemAssets {
+    pub fn image_bundle(&self, item: Item) -> AtlasImageBundle {
+        let index = match item {
+            Item::Boots => 18,
+            Item::Key => 83,
+            Item::Knife => 19,
+            Item::Unknown => 0,
+        };
+        AtlasImageBundle {
+            texture_atlas: TextureAtlas {
+                layout: self.texture_atlas_layout.clone(),
+                index,
+            },
+            image: UiImage::new(self.texture.clone()),
+            ..default()
+        }
+    }
 }
