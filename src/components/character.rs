@@ -19,13 +19,13 @@ impl Life {
         self.current
     }
 
-    // pub fn hit(&mut self, damage: u16) {
-    //     if damage > self.current {
-    //         self.current = 0;
-    //     } else {
-    //         self.current -= damage;
-    //     }
-    // }
+    pub fn hit(&mut self, damage: u16) {
+        if damage > self.current {
+            self.current = 0;
+        } else {
+            self.current -= damage;
+        }
+    }
 
     // pub fn is_dead(&self) -> bool {
     //     self.current == 0
@@ -35,6 +35,9 @@ impl Life {
     //     self.current = std::cmp::min(self.current + life, self.max);
     // }
 }
+
+#[derive(Clone, Copy, Component)]
+pub struct Damage(pub u16);
 
 #[derive(Clone, Default, Component)]
 pub struct GroundDetection {

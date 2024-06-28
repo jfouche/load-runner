@@ -1,10 +1,15 @@
+use crate::in_game::collisions::*;
 use crate::{components::*, schedule::InGameSet};
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 pub fn player_plugin(app: &mut App) {
     app.add_systems(Update, spawn_ground_sensor)
-        .add_systems(Update, movement.in_set(InGameSet::UserInput));
+        .add_systems(Update, movement.in_set(InGameSet::UserInput))
+        .add_systems(
+            Update,
+            player_hits_enemy.in_set(InGameSet::CollisionDetection),
+        );
 }
 
 /// Spawn a [Sensor] at the bottom of a collider to detect when it is on the ground
@@ -51,6 +56,25 @@ fn movement(
         if input.just_pressed(KeyCode::Space) && (ground_detection.on_ground || climber.climbing) {
             velocity.linvel.y = JUMP_SPEED;
             climber.climbing = false;
+        }
+    }
+}
+
+fn player_hits_enemy(
+    mut collisions: EventReader<CollisionEvent>,
+    mut players: Query<(Entity, &mut Life), With<Player>>,
+    enemies: Query<&Damage, With<Enemy>>,
+) {
+    if let Ok((player_entity, mut life)) = players.get_single_mut() {
+        if let Some(damage) = collisions
+            .read()
+            .filter_map(start_event_filter)
+            .filter_map(|(&e1, &e2)| enemies.get_either(e1, e2))
+            .filter(|(_damage, _enemy_entity, other_entity)| *other_entity == player_entity)
+            .map(|(damage, _enemy_entity, _player_entity)| damage)
+            .next()
+        {
+            life.hit(damage.0);
         }
     }
 }
