@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use std::collections::HashSet;
 
-#[derive(Component, Clone, Copy)]
+#[derive(Component, Clone, Copy, Debug, Reflect)]
 pub struct Life {
     current: u16,
     // max: u16,
@@ -27,9 +27,9 @@ impl Life {
         }
     }
 
-    // pub fn is_dead(&self) -> bool {
-    //     self.current == 0
-    // }
+    pub fn is_dead(&self) -> bool {
+        self.current == 0
+    }
 
     // pub fn add(&mut self, life: u16) {
     //     self.current = std::cmp::min(self.current + life, self.max);

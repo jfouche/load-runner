@@ -1,10 +1,16 @@
+use std::time::Duration;
+
 use crate::in_game::collisions::*;
+use crate::utils::*;
 use crate::{components::*, schedule::InGameSet};
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
+use super::GROUP_ENEMY;
+
 pub fn player_plugin(app: &mut App) {
-    app.add_systems(Update, spawn_ground_sensor)
+    app.add_event::<PlayerDiedEvent>()
+        .add_systems(Update, spawn_ground_sensor)
         .add_systems(Update, movement.in_set(InGameSet::UserInput))
         .add_systems(
             Update,
@@ -61,9 +67,11 @@ fn movement(
 }
 
 fn player_hits_enemy(
+    mut commands: Commands,
     mut collisions: EventReader<CollisionEvent>,
     mut players: Query<(Entity, &mut Life), With<Player>>,
     enemies: Query<&Damage, With<Enemy>>,
+    mut died_events: EventWriter<PlayerDiedEvent>,
 ) {
     if let Ok((player_entity, mut life)) = players.get_single_mut() {
         if let Some(damage) = collisions
@@ -75,6 +83,15 @@ fn player_hits_enemy(
             .next()
         {
             life.hit(damage.0);
+            if life.is_dead() {
+                died_events.send(PlayerDiedEvent);
+            } else {
+                // Make player invulnerable
+                commands.entity(player_entity).insert((
+                    Invulnerable::new(Duration::from_secs_f32(2.0), GROUP_ENEMY),
+                    Blink::new(Duration::from_secs_f32(0.15)),
+                ));
+            }
         }
     }
 }

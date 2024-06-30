@@ -1,3 +1,5 @@
+use crate::in_game::GROUP_ENEMY;
+
 use super::*;
 use bevy::prelude::*;
 use bevy_ecs_ldtk::{prelude::*, utils::ldtk_pixel_coords_to_translation_pivoted};
@@ -67,6 +69,7 @@ pub struct MobBundle {
     #[sprite_sheet_bundle]
     sprite_sheet_bundle: SpriteSheetBundle,
     collider_bundle: ColliderBundle,
+    collision_groups: CollisionGroups,
     #[ldtk_entity]
     patrol: Patrol,
 }
@@ -84,6 +87,7 @@ impl Default for MobBundle {
                 rotation_constraints: LockedAxes::ROTATION_LOCKED,
                 ..Default::default()
             },
+            collision_groups: CollisionGroups::new(GROUP_ENEMY, Group::ALL),
             patrol: Patrol::default(),
         }
     }

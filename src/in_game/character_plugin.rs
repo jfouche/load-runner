@@ -1,12 +1,17 @@
-use crate::{components::*, schedule::InGameSet};
+use crate::{components::*, schedule::InGameSet, utils::*};
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 pub fn character_plugin(app: &mut App) {
-    app.add_systems(
-        Update,
-        (detect_climb_range, ignore_gravity_if_climbing).in_set(InGameSet::CollisionDetection),
-    );
+    app.register_type::<Life>()
+        .add_systems(
+            Update,
+            (detect_climb_range, ignore_gravity_if_climbing).in_set(InGameSet::CollisionDetection),
+        )
+        .add_systems(
+            Update,
+            invulnerability_finished.in_set(InGameSet::EntityUpdate),
+        );
 }
 
 fn detect_climb_range(
@@ -52,5 +57,11 @@ fn ignore_gravity_if_climbing(mut query: Query<(&Climber, &mut GravityScale), Ch
         } else {
             gravity_scale.0 = 1.0;
         }
+    }
+}
+
+fn invulnerability_finished(mut commands: Commands, mut entities: RemovedComponents<Invulnerable>) {
+    for entity in entities.read() {
+        commands.entity(entity).remove::<Blink>();
     }
 }

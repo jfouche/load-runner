@@ -12,6 +12,7 @@ mod main_menu;
 mod schedule;
 mod splash;
 mod ui;
+mod utils;
 
 const PIXELS_PER_METER: f32 = 100.0;
 
@@ -25,6 +26,7 @@ fn main() {
         .add_plugins(debug::plugin)
         .add_plugins((
             schedule::schedule_plugin,
+            utils::UtilsPlugins,
             ui::UiPlugins,
             splash::splash_plugin,
             main_menu::main_menu_plugin,

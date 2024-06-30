@@ -1,3 +1,5 @@
+use crate::in_game::GROUP_PLAYER;
+
 use super::*;
 use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
@@ -14,6 +16,7 @@ pub struct PlayerBundle {
     #[sprite_bundle("player.png")]
     sprite_bundle: SpriteBundle,
     collider_bundle: ColliderBundle,
+    collision_groups: CollisionGroups,
     active_events: ActiveEvents,
     #[worldly]
     worldly: Worldly,
@@ -44,6 +47,7 @@ impl Default for PlayerBundle {
                 rotation_constraints: LockedAxes::ROTATION_LOCKED,
                 ..Default::default()
             },
+            collision_groups: CollisionGroups::new(GROUP_PLAYER, Group::ALL),
             active_events: ActiveEvents::COLLISION_EVENTS,
             worldly: Worldly::default(),
             climber: Climber::default(),
@@ -53,3 +57,6 @@ impl Default for PlayerBundle {
         }
     }
 }
+
+#[derive(Event)]
+pub struct PlayerDiedEvent;
