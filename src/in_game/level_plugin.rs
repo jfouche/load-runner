@@ -22,6 +22,7 @@ pub fn level_plugin(app: &mut App) {
         .register_ldtk_entity::<PlayerBundle>("Player")
         .register_ldtk_entity::<MobBundle>("Mob")
         .register_ldtk_entity::<ChestBundle>("Chest")
+        .register_ldtk_entity::<DoorBundle>("Door")
         // LoadLevel
         .add_systems(OnEnter(InGameState::LoadLevel), (show_level, spawn_level))
         .add_systems(

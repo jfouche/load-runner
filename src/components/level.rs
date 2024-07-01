@@ -1,3 +1,4 @@
+use super::Items;
 use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -134,6 +135,37 @@ impl From<IntGridCell> for SensorBundle {
             }
         } else {
             SensorBundle::default()
+        }
+    }
+}
+
+#[derive(Component, Clone, Copy)]
+pub struct Door;
+
+#[derive(Bundle, LdtkEntity)]
+
+pub struct DoorBundle {
+    tag: Door,
+    name: Name,
+    #[from_entity_instance]
+    expect: Items,
+    #[sprite_sheet_bundle]
+    sprite_sheet_bundle: SpriteSheetBundle,
+    collider_bundle: ColliderBundle,
+}
+
+impl Default for DoorBundle {
+    fn default() -> Self {
+        DoorBundle {
+            tag: Door,
+            name: Name::new("Door"),
+            expect: Items::default(),
+            sprite_sheet_bundle: SpriteSheetBundle::default(),
+            collider_bundle: ColliderBundle {
+                collider: Collider::cuboid(24., 24.),
+                rigid_body: RigidBody::Fixed,
+                ..Default::default()
+            },
         }
     }
 }
