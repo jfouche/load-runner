@@ -4,6 +4,7 @@ use bevy_rapier2d::prelude::*;
 
 mod character_plugin;
 mod collisions;
+mod death_menu;
 mod enemy_plugin;
 mod hud_plugin;
 mod item_plugin;
@@ -19,6 +20,7 @@ pub struct InGamePlugins;
 impl PluginGroup for InGamePlugins {
     fn build(self) -> PluginGroupBuilder {
         PluginGroupBuilder::start::<Self>()
+            .add(death_menu::plugin)
             .add(character_plugin::character_plugin)
             .add(enemy_plugin::enemy_plugin)
             .add(hud_plugin::hud_plugin)

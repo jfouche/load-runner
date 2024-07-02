@@ -17,7 +17,7 @@ pub enum InGameState {
     Running,
     Pause,
     // PlayerEndedLevel,
-    // PlayerDied,
+    PlayerDied,
     // PlayerFinished,
     LoadLevel,
 }

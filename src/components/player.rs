@@ -4,6 +4,14 @@ use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 
+#[derive(Resource)]
+pub struct PlayerAssets {
+    pub walk_sprites: Handle<Image>,
+    pub walk_atlas_layout: Handle<TextureAtlasLayout>,
+    pub death_sprites: Handle<Image>,
+    pub death_atlas_layout: Handle<TextureAtlasLayout>,
+}
+
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
 pub struct Player;
 
@@ -39,7 +47,7 @@ impl Default for PlayerBundle {
             life: Life::new(10),
             sprite_bundle: SpriteBundle::default(),
             texture_atlas: TextureAtlas::default(),
-            animation_timer: AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
+            animation_timer: AnimationTimer::default(),
             collider_bundle: ColliderBundle {
                 collider: Collider::cuboid(7., 8.),
                 rigid_body: RigidBody::Dynamic,
@@ -62,4 +70,4 @@ impl Default for PlayerBundle {
 }
 
 #[derive(Event)]
-pub struct PlayerDiedEvent;
+pub struct PlayerDeathEvent;

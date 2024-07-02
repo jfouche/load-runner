@@ -9,23 +9,62 @@ use bevy_rapier2d::prelude::*;
 use super::GROUP_ENEMY;
 
 pub fn player_plugin(app: &mut App) {
-    app.add_event::<PlayerDiedEvent>()
+    app.add_event::<PlayerDeathEvent>()
+        .add_systems(Startup, load_assets)
         .add_systems(Update, (spawn_ground_sensor, set_texture_atlas))
         .add_systems(Update, movement.in_set(InGameSet::UserInput))
-        .add_systems(Update, animate_player.in_set(InGameSet::UserInput))
+        .add_systems(
+            Update,
+            (animate_player, player_dying, animate_death).in_set(InGameSet::EntityUpdate),
+        )
         .add_systems(
             Update,
             player_hits_enemy.in_set(InGameSet::CollisionDetection),
         );
 }
 
+fn load_assets(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+) {
+    // WALK
+    let walk_sprites = asset_server.load("player/walk.png");
+    let walk_layout = TextureAtlasLayout::from_grid(
+        Vec2::splat(16.0),
+        8,
+        4,
+        Some(Vec2::splat(64.0)),
+        Some(Vec2::splat(32.0)),
+    );
+    let walk_atlas_layout = texture_atlas_layouts.add(walk_layout);
+
+    // DEATH
+    let death_sprites = asset_server.load("player/death.png");
+    let death_layout = TextureAtlasLayout::from_grid(
+        Vec2::splat(16.0),
+        6,
+        4,
+        Some(Vec2::splat(64.0)),
+        Some(Vec2::splat(32.0)),
+    );
+    let death_atlas_layout = texture_atlas_layouts.add(death_layout);
+
+    // ASSET RESOURCE
+    let assets = PlayerAssets {
+        walk_sprites,
+        walk_atlas_layout,
+        death_sprites,
+        death_atlas_layout,
+    };
+    commands.insert_resource(assets);
+}
+
 fn set_texture_atlas(
     mut players: Query<&mut TextureAtlas, Added<Player>>,
-    // asset_server: Res<AssetServer>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     if let Ok(mut atlas) = players.get_single_mut() {
-        // let texture = asset_server.load("player/walk.png");
         let layout = TextureAtlasLayout::from_grid(
             Vec2::splat(16.0),
             8,
@@ -100,6 +139,40 @@ fn animate_player(
     }
 }
 
+fn player_dying(
+    mut players: Query<(&mut TextureAtlas, &mut Handle<Image>), (With<Player>, Added<Dying>)>,
+    assets: Res<PlayerAssets>,
+) {
+    if let Ok((mut atlas, mut image)) = players.get_single_mut() {
+        *image = assets.death_sprites.clone();
+        atlas.layout = assets.death_atlas_layout.clone();
+        atlas.index = 0;
+    }
+}
+
+fn animate_death(
+    time: Res<Time>,
+    mut players: Query<(&mut AnimationTimer, &mut TextureAtlas), (With<Player>, With<Dying>)>,
+    mut death_events: EventWriter<PlayerDeathEvent>,
+) {
+    const DEATH_INDICES: [usize; 6] = [0, 1, 2, 3, 4, 5];
+
+    if let Ok((mut timer, mut atlas)) = players.get_single_mut() {
+        timer.tick(time.delta());
+        if timer.just_finished() {
+            let idx = match DEATH_INDICES.iter().position(|&v| v == atlas.index) {
+                Some(idx) => idx + 1,
+                None => 0,
+            };
+            if idx < DEATH_INDICES.len() {
+                atlas.index = DEATH_INDICES[idx];
+            } else {
+                death_events.send(PlayerDeathEvent);
+            }
+        }
+    }
+}
+
 fn movement(
     input: Res<ButtonInput<KeyCode>>,
     mut query: Query<(&mut Velocity, &mut Climber, &GroundDetection), With<Player>>,
@@ -138,7 +211,6 @@ fn player_hits_enemy(
     mut collisions: EventReader<CollisionEvent>,
     mut players: Query<(Entity, &mut Life), With<Player>>,
     enemies: Query<&Damage, With<Enemy>>,
-    mut died_events: EventWriter<PlayerDiedEvent>,
 ) {
     if let Ok((player_entity, mut life)) = players.get_single_mut() {
         if let Some(damage) = collisions
@@ -151,7 +223,7 @@ fn player_hits_enemy(
         {
             life.hit(damage.0);
             if life.is_dead() {
-                died_events.send(PlayerDiedEvent);
+                commands.entity(player_entity).insert(Dying);
             } else {
                 // Make player invulnerable
                 commands.entity(player_entity).insert((
