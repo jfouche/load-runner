@@ -4,7 +4,8 @@ use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 pub fn item_plugin(app: &mut App) {
-    app.add_systems(Startup, load_assets)
+    app.register_type::<Items>()
+        .add_systems(Startup, load_assets)
         .add_systems(Update, open_chest.in_set(InGameSet::CollisionDetection));
 }
 

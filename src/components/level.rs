@@ -162,7 +162,7 @@ impl Default for DoorBundle {
             expect: Items::default(),
             sprite_sheet_bundle: SpriteSheetBundle::default(),
             collider_bundle: ColliderBundle {
-                collider: Collider::cuboid(24., 24.),
+                collider: Collider::cuboid(8., 16.),
                 rigid_body: RigidBody::Fixed,
                 ..Default::default()
             },

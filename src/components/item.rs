@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Reflect)]
 pub enum Item {
     Unknown,
     Knife,
@@ -22,7 +22,7 @@ impl From<&String> for Item {
     }
 }
 
-#[derive(Clone, Component, Debug, Eq, Default, PartialEq)]
+#[derive(Clone, Component, Debug, Eq, Default, PartialEq, Reflect)]
 pub struct Items(pub Vec<Item>);
 
 impl From<&EntityInstance> for Items {
