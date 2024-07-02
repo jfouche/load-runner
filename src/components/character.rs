@@ -49,3 +49,6 @@ pub struct Climber {
     pub climbing: bool,
     pub intersecting_climbables: HashSet<Entity>,
 }
+
+#[derive(Component, Deref, DerefMut)]
+pub struct AnimationTimer(pub Timer);
