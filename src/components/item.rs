@@ -1,3 +1,5 @@
+use std::slice::Iter;
+
 use super::*;
 use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
@@ -23,7 +25,34 @@ impl From<&String> for Item {
 }
 
 #[derive(Clone, Component, Debug, Eq, Default, PartialEq, Reflect)]
-pub struct Items(pub Vec<Item>);
+pub struct Items(Vec<Item>);
+
+impl Items {
+    pub fn iter(&self) -> Iter<Item> {
+        self.0.iter()
+    }
+
+    pub fn add(&mut self, item: Item) {
+        self.0.push(item);
+    }
+
+    pub fn contains_items(&self, items: &Items) -> bool {
+        for item in items.0.iter() {
+            if !self.0.contains(item) {
+                return false;
+            }
+        }
+        true
+    }
+
+    pub fn remove_items(&mut self, items: &Items) {
+        for item in items.0.iter() {
+            if let Some(idx) = self.0.iter().position(|i| item == i) {
+                self.0.remove(idx);
+            }
+        }
+    }
+}
 
 impl From<&EntityInstance> for Items {
     fn from(entity_instance: &EntityInstance) -> Self {

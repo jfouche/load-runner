@@ -14,7 +14,11 @@ pub fn start_event_filter(event: &CollisionEvent) -> Option<(&Entity, &Entity)> 
 ///
 /// Example:
 /// ```
-/// query1.iter().filter_map(query.get_either(e1, e2)).map(|(data, e1, e2)|{})
+/// query.iter()
+///     .filter_map(query.get_either(e1, e2))
+///     .map(|(data, found_entity, other_entity)| {
+///         //...
+///     })
 /// ```
 pub trait QueryEither<'w, D>
 where

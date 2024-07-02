@@ -77,7 +77,7 @@ fn update_player_items(
 
         // add all items
         cmd.with_children(|parent| {
-            for &item in &items.0 {
+            for &item in items.iter() {
                 parent.spawn((Name::new(format!("{item:?}")), assets.image_bundle(item)));
             }
         });

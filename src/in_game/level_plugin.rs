@@ -1,3 +1,4 @@
+use super::collisions::*;
 use crate::{components::*, schedule::InGameSet, ui::*};
 use bevy::{ecs::query::QuerySingleError, prelude::*};
 use bevy_ecs_ldtk::prelude::*;
@@ -45,7 +46,7 @@ pub fn level_plugin(app: &mut App) {
         )
         .add_systems(
             Update,
-            ground_detection.in_set(InGameSet::CollisionDetection),
+            (ground_detection, open_door).in_set(InGameSet::CollisionDetection),
         )
         .add_systems(Update, restart_level.in_set(InGameSet::UserInput));
 }
@@ -388,4 +389,25 @@ fn restart_level(
             commands.entity(level_entity).insert(Respawn);
         }
     }
+}
+
+fn open_door(
+    mut commands: Commands,
+    mut collisions: EventReader<CollisionEvent>,
+    mut players: Query<(Entity, &mut Items), With<Player>>,
+    doors: Query<&Items, (With<Door>, Without<Player>)>,
+) {
+    let (player_entity, mut player_items) = players.get_single_mut().expect("Player");
+    collisions
+        .read()
+        .filter_map(start_event_filter)
+        .filter_map(|(&e1, &e2)| doors.get_either(e1, e2))
+        .filter(|(_expected_items, _door_entity, other_entity)| player_entity == *other_entity)
+        .for_each(|(expected_items, door_entity, _player_entity)| {
+            if player_items.contains_items(expected_items) {
+                info!("Player open door");
+                player_items.remove_items(expected_items);
+                commands.entity(door_entity).despawn_recursive();
+            }
+        });
 }

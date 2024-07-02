@@ -38,8 +38,8 @@ fn open_chest(
         .filter(|(_items, _chest_entity, other_entity)| player_entity == *other_entity)
         .for_each(|(chest_items, chest_entity, _player_entity)| {
             info!("Player open chest");
-            for i in &chest_items.0 {
-                player_items.0.push(*i);
+            for i in chest_items.iter() {
+                player_items.add(*i);
             }
             commands.entity(chest_entity).despawn_recursive();
         });
