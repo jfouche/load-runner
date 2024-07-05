@@ -84,6 +84,7 @@ fn spawn_ground_sensor(
     detect_ground_for: Query<(Entity, &Collider), Added<GroundDetection>>,
 ) {
     for (entity, collider) in &detect_ground_for {
+        // TODO: use  Collider::compute_aabb
         if let Some(cuboid) = collider.as_cuboid() {
             info!("spawn_ground_sensor for {entity:?}");
             commands.entity(entity).with_children(|builder| {
@@ -183,8 +184,8 @@ fn movement(
     input: Res<ButtonInput<KeyCode>>,
     mut query: Query<(&mut Velocity, &mut Climber, &GroundDetection), With<Player>>,
 ) {
-    const MOVE_SPEED: f32 = 160.;
-    const JUMP_SPEED: f32 = 400.;
+    const MOVE_SPEED: f32 = 130.;
+    const JUMP_SPEED: f32 = 350.;
 
     for (mut velocity, mut climber, ground_detection) in &mut query {
         let right = if input.pressed(KeyCode::KeyD) { 1. } else { 0. };
@@ -194,7 +195,7 @@ fn movement(
 
         if climber.intersecting_climbables.is_empty() {
             climber.climbing = false;
-        } else if input.just_pressed(KeyCode::KeyW) || input.just_pressed(KeyCode::KeyS) {
+        } else if input.pressed(KeyCode::KeyW) || input.pressed(KeyCode::KeyS) {
             climber.climbing = true;
         }
 

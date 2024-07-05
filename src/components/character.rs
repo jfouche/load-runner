@@ -73,7 +73,7 @@ impl GroundSensorCollider {
     }
 }
 
-#[derive(Clone, Default, Component)]
+#[derive(Clone, Default, Component, Debug)]
 pub struct GroundDetection {
     pub on_ground: bool,
 }
