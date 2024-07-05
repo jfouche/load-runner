@@ -1,8 +1,10 @@
 mod blink;
 mod invulnerable;
+mod temp;
 
 pub use blink::*;
 pub use invulnerable::*;
+pub use temp::Temporary;
 
 use bevy::app::{PluginGroup, PluginGroupBuilder};
 
@@ -13,5 +15,6 @@ impl PluginGroup for UtilsPlugins {
         PluginGroupBuilder::start::<Self>()
             .add(BlinkPlugin)
             .add(InvulnerabilityPlugin)
+            .add(temp::temporary_plugin)
     }
 }

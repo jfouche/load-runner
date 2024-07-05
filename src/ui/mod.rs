@@ -1,13 +1,11 @@
 mod fade;
 mod menu;
 mod progressbar;
-mod temp;
 
 use bevy::{app::PluginGroupBuilder, prelude::*};
 pub use fade::*;
 pub use menu::*;
 pub use progressbar::*;
-pub use temp::Temporary;
 
 pub struct UiPlugins;
 
@@ -16,7 +14,6 @@ impl PluginGroup for UiPlugins {
         PluginGroupBuilder::start::<Self>()
             .add(progressbar::plugin)
             .add(fade::plugin)
-            .add(temp::temporary_plugin)
     }
 }
 
