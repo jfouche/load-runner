@@ -2,7 +2,6 @@ use super::Items;
 use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
-use std::collections::HashSet;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
 pub struct Wall;
@@ -67,39 +66,6 @@ impl Default for LadderBundle {
             name: Name::new("Ladder"),
             sensor_bundle: SensorBundle::default(),
             climbable: Climbable,
-        }
-    }
-}
-
-#[derive(Component)]
-pub struct GroundSensor {
-    pub ground_detection_entity: Entity,
-    pub intersecting_ground_entities: HashSet<Entity>,
-}
-
-#[derive(Bundle)]
-pub struct GroundSensorCollider {
-    name: Name,
-    events: ActiveEvents,
-    collider: Collider,
-    sensor: Sensor,
-    transform: TransformBundle,
-    ground_sensor: GroundSensor,
-}
-
-impl GroundSensorCollider {
-    pub fn new(parent: Entity, half_extents: Vec2) -> Self {
-        let pos = Vec3::new(0., -half_extents.y, 0.);
-        GroundSensorCollider {
-            name: Name::new("GroundSensor"),
-            events: ActiveEvents::COLLISION_EVENTS,
-            collider: Collider::cuboid(half_extents.x / 2.0, 2.),
-            sensor: Sensor,
-            transform: TransformBundle::from_transform(Transform::from_translation(pos)),
-            ground_sensor: GroundSensor {
-                ground_detection_entity: parent,
-                intersecting_ground_entities: HashSet::new(),
-            },
         }
     }
 }

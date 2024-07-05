@@ -93,9 +93,19 @@ fn spawn_ground_sensor(
     }
 }
 
+fn sprite_index(indices: &[usize], current: usize) -> usize {
+    match indices.iter().position(|&v| v == current) {
+        Some(idx) => (idx + 1) % indices.len(),
+        None => 0,
+    }
+}
+
 fn animate_player(
     time: Res<Time>,
-    mut players: Query<(&Velocity, &Climber, &mut AnimationTimer, &mut TextureAtlas), With<Player>>,
+    mut players: Query<
+        (&Velocity, &Climber, &mut AnimationTimer, &mut TextureAtlas),
+        (With<Player>, Without<Dying>),
+    >,
 ) {
     const MOVE_RIGHT_INDICES: [usize; 8] = [0, 1, 2, 3, 4, 5, 6, 7];
     const MOVE_LEFT_INDICES: [usize; 8] = [8, 9, 10, 11, 12, 13, 14, 15];
@@ -106,26 +116,17 @@ fn animate_player(
         if timer.just_finished() {
             if velocity.linvel.x > f32::EPSILON {
                 // Move right
-                let idx = match MOVE_RIGHT_INDICES.iter().position(|&v| v == atlas.index) {
-                    Some(idx) => (idx + 1) % MOVE_RIGHT_INDICES.len(),
-                    None => 0,
-                };
+                let idx = sprite_index(&MOVE_RIGHT_INDICES, atlas.index);
                 atlas.index = MOVE_RIGHT_INDICES[idx];
             } else if velocity.linvel.x < -f32::EPSILON {
                 // Moving left
-                let idx = match MOVE_LEFT_INDICES.iter().position(|&v| v == atlas.index) {
-                    Some(idx) => (idx + 1) % MOVE_LEFT_INDICES.len(),
-                    None => 0,
-                };
+                let idx = sprite_index(&MOVE_LEFT_INDICES, atlas.index);
                 atlas.index = MOVE_LEFT_INDICES[idx];
             } else if climber.climbing {
                 // Climbing
                 let idx = if velocity.linvel.y > f32::EPSILON || velocity.linvel.y < -f32::EPSILON {
                     // Moving
-                    match CLIMB_INDICES.iter().position(|&v| v == atlas.index) {
-                        Some(idx) => (idx + 1) % CLIMB_INDICES.len(),
-                        None => 0,
-                    }
+                    sprite_index(&CLIMB_INDICES, atlas.index)
                 } else {
                     // Doesn't move during climbing
                     0
@@ -151,23 +152,28 @@ fn player_dying(
 }
 
 fn animate_death(
+    mut commands: Commands,
     time: Res<Time>,
-    mut players: Query<(&mut AnimationTimer, &mut TextureAtlas), (With<Player>, With<Dying>)>,
+    mut players: Query<
+        (Entity, &mut AnimationTimer, &mut TextureAtlas),
+        (With<Player>, With<Dying>),
+    >,
     mut death_events: EventWriter<PlayerDeathEvent>,
 ) {
     const DEATH_INDICES: [usize; 6] = [0, 1, 2, 3, 4, 5];
 
-    if let Ok((mut timer, mut atlas)) = players.get_single_mut() {
+    if let Ok((player_entity, mut timer, mut atlas)) = players.get_single_mut() {
         timer.tick(time.delta());
         if timer.just_finished() {
-            let idx = match DEATH_INDICES.iter().position(|&v| v == atlas.index) {
-                Some(idx) => idx + 1,
-                None => 0,
-            };
-            if idx < DEATH_INDICES.len() {
-                atlas.index = DEATH_INDICES[idx];
-            } else {
-                death_events.send(PlayerDeathEvent);
+            match DEATH_INDICES.iter().position(|&v| v == atlas.index) {
+                Some(idx) if idx >= DEATH_INDICES.len() - 1 => {
+                    death_events.send(PlayerDeathEvent);
+                    commands
+                        .entity(player_entity)
+                        .remove::<(Dying, AnimationTimer, ColliderBundle)>();
+                }
+                Some(idx) => atlas.index = DEATH_INDICES[idx + 1],
+                None => unreachable!(),
             }
         }
     }
@@ -177,7 +183,7 @@ fn movement(
     input: Res<ButtonInput<KeyCode>>,
     mut query: Query<(&mut Velocity, &mut Climber, &GroundDetection), With<Player>>,
 ) {
-    const MOVE_SPEED: f32 = 200.;
+    const MOVE_SPEED: f32 = 160.;
     const JUMP_SPEED: f32 = 400.;
 
     for (mut velocity, mut climber, ground_detection) in &mut query {

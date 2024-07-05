@@ -49,7 +49,7 @@ impl Default for PlayerBundle {
             texture_atlas: TextureAtlas::default(),
             animation_timer: AnimationTimer::default(),
             collider_bundle: ColliderBundle {
-                collider: Collider::cuboid(7., 8.),
+                collider: Collider::round_cuboid(3., 5., 2.),
                 rigid_body: RigidBody::Dynamic,
                 friction: Friction {
                     coefficient: 0.0,
