@@ -83,22 +83,19 @@ fn spawn_ground_sensor(
     mut commands: Commands,
     detect_ground_for: Query<(Entity, &Collider), Added<GroundDetection>>,
 ) {
-    for (entity, collider) in &detect_ground_for {
-        // TODO: use  Collider::compute_aabb
-        if let Some(cuboid) = collider.as_cuboid() {
-            info!("spawn_ground_sensor for {entity:?}");
-            commands.entity(entity).with_children(|builder| {
-                builder.spawn(GroundSensorCollider::new(entity, cuboid.half_extents()));
-            });
-        }
+    for (entity, _collider) in &detect_ground_for {
+        commands.entity(entity).with_children(|builder| {
+            builder.spawn(GroundSensorCollider::new(entity, Vec2::new(7.0, 8.0)));
+        });
     }
 }
 
-fn sprite_index(indices: &[usize], current: usize) -> usize {
-    match indices.iter().position(|&v| v == current) {
+fn next_sprite_index(indices: &[usize], current: usize) -> usize {
+    let idx = match indices.iter().position(|&v| v == current) {
         Some(idx) => (idx + 1) % indices.len(),
         None => 0,
-    }
+    };
+    indices[idx]
 }
 
 fn animate_player(
@@ -111,31 +108,28 @@ fn animate_player(
     const MOVE_RIGHT_INDICES: [usize; 8] = [0, 1, 2, 3, 4, 5, 6, 7];
     const MOVE_LEFT_INDICES: [usize; 8] = [8, 9, 10, 11, 12, 13, 14, 15];
     const CLIMB_INDICES: [usize; 8] = [24, 25, 26, 27, 28, 29, 30, 31];
+    const FIXED_INDICE: usize = 16;
 
     if let Ok((velocity, climber, mut timer, mut atlas)) = players.get_single_mut() {
         timer.tick(time.delta());
         if timer.just_finished() {
-            if velocity.linvel.x > f32::EPSILON {
-                // Move right
-                let idx = sprite_index(&MOVE_RIGHT_INDICES, atlas.index);
-                atlas.index = MOVE_RIGHT_INDICES[idx];
-            } else if velocity.linvel.x < -f32::EPSILON {
-                // Moving left
-                let idx = sprite_index(&MOVE_LEFT_INDICES, atlas.index);
-                atlas.index = MOVE_LEFT_INDICES[idx];
+            if velocity.move_right() {
+                atlas.index = next_sprite_index(&MOVE_RIGHT_INDICES, atlas.index)
+            } else if velocity.move_left() {
+                atlas.index = next_sprite_index(&MOVE_LEFT_INDICES, atlas.index);
             } else if climber.climbing {
                 // Climbing
-                let idx = if velocity.linvel.y > f32::EPSILON || velocity.linvel.y < -f32::EPSILON {
+                let idx = if velocity.climb() {
                     // Moving
-                    sprite_index(&CLIMB_INDICES, atlas.index)
+                    next_sprite_index(&CLIMB_INDICES, atlas.index)
                 } else {
                     // Doesn't move during climbing
-                    0
+                    CLIMB_INDICES[0]
                 };
-                atlas.index = CLIMB_INDICES[idx];
+                atlas.index = idx;
             } else {
                 // Doesn't move
-                atlas.index = 16;
+                atlas.index = FIXED_INDICE;
             }
         }
     }
