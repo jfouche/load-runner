@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use super::collisions::*;
 use crate::{components::*, schedule::InGameSet, ui::*};
 use bevy::prelude::*;
@@ -5,9 +7,10 @@ use bevy_rapier2d::prelude::*;
 
 pub fn item_plugin(app: &mut App) {
     app.register_type::<Items>()
+        .register_type::<Over>()
         .add_systems(Startup, load_assets)
         .add_systems(Update, open_chest.in_set(InGameSet::CollisionDetection))
-        .add_systems(Update, show_new_items.in_set(InGameSet::EntityUpdate));
+        .add_systems(Update, spawn_items_wnd.in_set(InGameSet::EntityUpdate));
 }
 
 fn load_assets(
@@ -43,10 +46,13 @@ fn open_chest(
                 player_items.add(*i);
             }
             commands.entity(chest_entity).despawn_recursive();
-            commands.spawn(NewItemsInfoBundle::new(player_entity, chest_items.clone()));
+            commands.spawn(
+                ItemsWindowBundle::new(chest_items.clone(), player_entity)
+                    .with_offset(Vec3::new(-8.0, 25., 0.0)),
+            );
         });
 }
-
+/*
 fn show_new_items(
     mut commands: Commands,
     items: Query<(&Items, &Over), Added<NewItemsInfo>>,
@@ -71,6 +77,46 @@ fn show_new_items(
                         ..Default::default()
                     },
                 ));
+            }
+        }
+    }
+}
+ */
+
+fn spawn_items_wnd(
+    mut commands: Commands,
+    items_wnds: Query<(Entity, &Items, &Over), Added<ItemsWindow>>,
+    entities: Query<&Transform, Without<Camera2d>>,
+    cameras: Query<(&Camera, &GlobalTransform), With<Camera2d>>,
+    assets: Res<ItemAssets>,
+) {
+    let (camera, camera_transform) = cameras.get_single().expect("Camera2d");
+    for (entity, items, over) in &items_wnds {
+        info!("spawn_items_wnd");
+        if let Ok(entity_position) = entities.get(over.entity) {
+            let world_pos = entity_position.translation + over.offset;
+            if let Some(screen_pos) = camera.world_to_viewport(camera_transform, world_pos) {
+                commands.entity(entity).despawn();
+                commands
+                    .spawn((
+                        Temporary::new(Duration::from_secs(2)),
+                        NodeBundle {
+                            background_color: Color::rgba(0.3, 0.3, 0.3, 0.2).into(),
+                            style: Style {
+                                position_type: PositionType::Absolute,
+                                top: Val::Px(screen_pos.y),
+                                left: Val::Px(screen_pos.x),
+                                ..hsizer().style
+                            },
+                            ..Default::default()
+                        },
+                    ))
+                    .with_children(|panel| {
+                        for &item in items.iter() {
+                            panel
+                                .spawn((Name::new(format!("{item:?}")), assets.image_bundle(item)));
+                        }
+                    });
             }
         }
     }
