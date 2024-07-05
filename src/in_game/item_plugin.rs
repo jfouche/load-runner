@@ -1,12 +1,13 @@
 use super::collisions::*;
-use crate::{components::*, schedule::InGameSet};
+use crate::{components::*, schedule::InGameSet, ui::*};
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 pub fn item_plugin(app: &mut App) {
     app.register_type::<Items>()
         .add_systems(Startup, load_assets)
-        .add_systems(Update, open_chest.in_set(InGameSet::CollisionDetection));
+        .add_systems(Update, open_chest.in_set(InGameSet::CollisionDetection))
+        .add_systems(Update, show_new_items.in_set(InGameSet::EntityUpdate));
 }
 
 fn load_assets(
@@ -42,5 +43,35 @@ fn open_chest(
                 player_items.add(*i);
             }
             commands.entity(chest_entity).despawn_recursive();
+            commands.spawn(NewItemsInfoBundle::new(player_entity, chest_items.clone()));
         });
+}
+
+fn show_new_items(
+    mut commands: Commands,
+    items: Query<(&Items, &Over), Added<NewItemsInfo>>,
+    cameras: Query<(&Camera, &GlobalTransform), With<Camera2d>>,
+    entities: Query<&Transform, Without<Camera2d>>,
+) {
+    let (camera, camera_transform) = cameras.get_single().expect("Camera2d");
+    for (items, Over(entity)) in &items {
+        if let Ok(entity_position) = entities.get(*entity) {
+            let world_pos = entity_position.translation;
+            if let Some(screen_pos) = camera.world_to_viewport(camera_transform, world_pos) {
+                commands.spawn((
+                    Name::new("NewItemsInfo"),
+                    NodeBundle {
+                        background_color: Color::rgba(0.3, 0.3, 0.3, 0.2).into(),
+                        style: Style {
+                            position_type: PositionType::Absolute,
+                            top: Val::Px(10.0),
+                            left: Val::Px(10.0),
+                            ..hsizer().style
+                        },
+                        ..Default::default()
+                    },
+                ));
+            }
+        }
+    }
 }

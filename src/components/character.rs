@@ -1,3 +1,4 @@
+use super::Items;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 use std::collections::HashSet;
@@ -115,3 +116,28 @@ impl Default for AnimationTimer {
 
 #[derive(Component, Clone, Copy)]
 pub struct Dying;
+
+#[derive(Component, Clone, Copy, Default)]
+pub struct NewItemsInfo;
+
+#[derive(Component, Clone, Copy)]
+pub struct Over(pub Entity);
+
+#[derive(Bundle)]
+pub struct NewItemsInfoBundle {
+    tag: NewItemsInfo,
+    name: Name,
+    items: Items,
+    over: Over,
+}
+
+impl NewItemsInfoBundle {
+    pub fn new(parent: Entity, items: Items) -> Self {
+        NewItemsInfoBundle {
+            tag: NewItemsInfo,
+            name: Name::new("NewItemsInfo"),
+            items,
+            over: Over(parent),
+        }
+    }
+}
