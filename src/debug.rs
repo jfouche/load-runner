@@ -13,10 +13,10 @@ pub fn plugin(app: &mut App) {
         Update,
         (toggle_grab, display_player_items).in_set(InGameSet::UserInput),
     )
-    .add_systems(
-        Update,
-        (display_collision_events,).after(InGameSet::EntityUpdate),
-    )
+    // .add_systems(
+    //     Update,
+    //     (display_collision_events,).after(InGameSet::EntityUpdate),
+    // )
     // States
     .add_systems(
         Update,
@@ -45,6 +45,7 @@ fn toggle_grab(
     }
 }
 
+#[allow(dead_code)]
 fn display_collision_events(mut collisions: EventReader<CollisionEvent>, names: Query<DebugName>) {
     let get_name = |e| {
         names
