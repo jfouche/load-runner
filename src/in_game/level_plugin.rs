@@ -414,10 +414,10 @@ fn open_door(
 }
 
 fn end_level(
-    mut commands: Commands,
     mut collisions: EventReader<CollisionEvent>,
     mut players: Query<Entity, With<Player>>,
     end_levels: Query<&EndLevel>,
+    mut in_game_state: ResMut<NextState<InGameState>>,
 ) {
     let player_entity = players.get_single_mut().expect("Player");
     collisions
@@ -427,5 +427,6 @@ fn end_level(
         .filter(|(_, _end_entity, other_entity)| player_entity == *other_entity)
         .for_each(|(_, _end_entity, _player_entity)| {
             info!("Player end level");
+            in_game_state.set(InGameState::PlayerEndedLevel);
         });
 }

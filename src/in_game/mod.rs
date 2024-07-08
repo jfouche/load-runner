@@ -5,6 +5,7 @@ use bevy_rapier2d::prelude::*;
 mod character_plugin;
 mod collisions;
 mod death_menu;
+mod end_level_menu;
 mod enemy_plugin;
 mod hud_plugin;
 mod item_plugin;
@@ -28,6 +29,7 @@ impl PluginGroup for InGamePlugins {
             .add(player_plugin::player_plugin)
             .add(pause_menu::pause_menu_plugin)
             .add(item_plugin::item_plugin)
+            .add(end_level_menu::end_level_menu_plugin)
             .add(in_game_plugin)
     }
 }
