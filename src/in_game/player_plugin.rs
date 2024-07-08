@@ -1,17 +1,17 @@
-use std::time::Duration;
-
+use super::GROUP_ENEMY;
 use crate::in_game::collisions::*;
 use crate::utils::*;
 use crate::{components::*, schedule::InGameSet};
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
-
-use super::GROUP_ENEMY;
+use std::time::Duration;
 
 pub fn player_plugin(app: &mut App) {
     app.add_event::<PlayerDeathEvent>()
+        // STARTUP
         .add_systems(Startup, load_assets)
         .add_systems(Update, (spawn_ground_sensor, set_texture_atlas))
+        // IN GAME
         .add_systems(Update, movement.in_set(InGameSet::UserInput))
         .add_systems(
             Update,

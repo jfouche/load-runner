@@ -135,3 +135,32 @@ impl Default for DoorBundle {
         }
     }
 }
+
+#[derive(Component)]
+pub struct EndLevel;
+
+#[derive(Bundle, LdtkEntity)]
+pub struct EndLevelBundle {
+    tag: EndLevel,
+    name: Name,
+    #[sprite_sheet_bundle]
+    sprite_sheet_bundle: SpriteSheetBundle,
+    collider_bundle: ColliderBundle,
+    sensor: Sensor,
+}
+
+impl Default for EndLevelBundle {
+    fn default() -> Self {
+        EndLevelBundle {
+            tag: EndLevel,
+            name: Name::new("EndLevel"),
+            sprite_sheet_bundle: SpriteSheetBundle::default(),
+            collider_bundle: ColliderBundle {
+                collider: Collider::cuboid(8., 16.),
+                rigid_body: RigidBody::Fixed,
+                ..Default::default()
+            },
+            sensor: Sensor,
+        }
+    }
+}

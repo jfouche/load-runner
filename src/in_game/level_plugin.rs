@@ -24,6 +24,7 @@ pub fn level_plugin(app: &mut App) {
         .register_ldtk_entity::<MobBundle>("Mob")
         .register_ldtk_entity::<ChestBundle>("Chest")
         .register_ldtk_entity::<DoorBundle>("Door")
+        .register_ldtk_entity::<EndLevelBundle>("End")
         // LoadLevel
         .add_systems(OnEnter(InGameState::LoadLevel), (show_level, spawn_level))
         .add_systems(
@@ -46,7 +47,7 @@ pub fn level_plugin(app: &mut App) {
         )
         .add_systems(
             Update,
-            (ground_detection, open_door).in_set(InGameSet::CollisionDetection),
+            (ground_detection, open_door, end_level).in_set(InGameSet::CollisionDetection),
         )
         .add_systems(Update, restart_level.in_set(InGameSet::UserInput));
 }
@@ -409,5 +410,22 @@ fn open_door(
                 player_items.remove_items(expected_items);
                 commands.entity(door_entity).despawn_recursive();
             }
+        });
+}
+
+fn end_level(
+    mut commands: Commands,
+    mut collisions: EventReader<CollisionEvent>,
+    mut players: Query<Entity, With<Player>>,
+    end_levels: Query<&EndLevel>,
+) {
+    let player_entity = players.get_single_mut().expect("Player");
+    collisions
+        .read()
+        .filter_map(start_event_filter)
+        .filter_map(|(&e1, &e2)| end_levels.get_either(e1, e2))
+        .filter(|(_, _end_entity, other_entity)| player_entity == *other_entity)
+        .for_each(|(_, _end_entity, _player_entity)| {
+            info!("Player end level");
         });
 }
