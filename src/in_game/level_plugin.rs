@@ -1,4 +1,4 @@
-use super::collisions::*;
+use super::{collisions::*, popup::*};
 use crate::{components::*, schedule::InGameSet, ui::*};
 use bevy::{ecs::query::QuerySingleError, prelude::*};
 use bevy_ecs_ldtk::prelude::*;
@@ -397,6 +397,7 @@ fn open_door(
     mut collisions: EventReader<CollisionEvent>,
     mut players: Query<(Entity, &mut Items), With<Player>>,
     doors: Query<&Items, (With<Door>, Without<Player>)>,
+    assets: Res<ItemAssets>,
 ) {
     let (player_entity, mut player_items) = players.get_single_mut().expect("Player");
     collisions
@@ -409,6 +410,21 @@ fn open_door(
                 info!("Player open door");
                 player_items.remove_items(expected_items);
                 commands.entity(door_entity).despawn_recursive();
+            } else {
+                // Show a popup that shows the expected items to open the door
+                let mut popup_content = PopupContent {
+                    title: "Closed door".into(),
+                    text: "You should have the following items".into(),
+                    ..Default::default()
+                };
+                for &item in expected_items.iter() {
+                    let bundle = assets.image_bundle(item);
+                    popup_content.add_image(PopupImage::AtlasImage {
+                        texture_atlas: bundle.texture_atlas,
+                        image: bundle.image,
+                    });
+                }
+                commands.spawn(PopupBundle::new(popup_content));
             }
         });
 }

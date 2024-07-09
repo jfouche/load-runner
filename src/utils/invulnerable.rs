@@ -45,7 +45,7 @@ fn invulnerability_finished(
         if !invulnerable.pause {
             invulnerable.timer.tick(time.delta());
             if invulnerable.timer.just_finished() {
-                warn!("invulnerability_finished");
+                info!("invulnerability_finished");
                 collision_groups.filters |= invulnerable.filters;
                 commands.entity(entity).remove::<Invulnerable>();
             }
