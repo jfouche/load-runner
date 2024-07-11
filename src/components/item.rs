@@ -7,19 +7,22 @@ use bevy_rapier2d::prelude::*;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Reflect)]
 pub enum Item {
-    Unknown,
-    Knife,
+    Gem,
     Boots,
     Key,
+    Unknown,
 }
 
 impl From<&String> for Item {
     fn from(value: &String) -> Self {
         match value.as_str() {
-            "Knife" => Item::Knife,
+            "Gem" => Item::Gem,
             "Boots" => Item::Boots,
             "Key" => Item::Key,
-            _ => Item::Unknown,
+            _ => {
+                error!("Unknown item {value}");
+                Item::Unknown
+            }
         }
     }
 }
@@ -115,7 +118,7 @@ impl ItemAssets {
         let index = match item {
             Item::Boots => 18,
             Item::Key => 83,
-            Item::Knife => 19,
+            Item::Gem => 1483,
             Item::Unknown => 0,
         };
         AtlasImageBundle {
