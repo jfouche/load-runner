@@ -84,8 +84,12 @@ fn spawn_popup(
                 title_bar.spawn(popup_title(&content.title));
             });
             menu.spawn(popup_text_content(&content.text));
-            for image in &content.images {
-                menu.spawn(popup_image(image));
+            if !content.images.is_empty() {
+                menu.spawn(hsizer()).with_children(|parent| {
+                    for image in &content.images {
+                        parent.spawn(popup_image(image));
+                    }
+                });
             }
         });
         // if let PopupCloseEvent::Duration(duration) = close_event {

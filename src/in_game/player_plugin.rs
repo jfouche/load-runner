@@ -176,12 +176,13 @@ fn animate_death(
 
 fn movement(
     input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Velocity, &mut Climber, &GroundDetection), With<Player>>,
+    mut query: Query<(&mut Velocity, &mut Climber, &GroundDetection, &Items), With<Player>>,
 ) {
-    const MOVE_SPEED: f32 = 130.;
-    const JUMP_SPEED: f32 = 350.;
+    const MOVE_SPEED: f32 = 120.;
+    const SMALL_JUMP_SPEED: f32 = 160.;
+    const BIG_JUMP_SPEED: f32 = 280.;
 
-    for (mut velocity, mut climber, ground_detection) in &mut query {
+    for (mut velocity, mut climber, ground_detection, items) in &mut query {
         let right = if input.pressed(KeyCode::KeyD) { 1. } else { 0. };
         let left = if input.pressed(KeyCode::KeyA) { 1. } else { 0. };
 
@@ -201,7 +202,11 @@ fn movement(
         }
 
         if input.just_pressed(KeyCode::Space) && (ground_detection.on_ground || climber.climbing) {
-            velocity.linvel.y = JUMP_SPEED;
+            velocity.linvel.y = if items.contains(Item::Boots) {
+                BIG_JUMP_SPEED
+            } else {
+                SMALL_JUMP_SPEED
+            };
             climber.climbing = false;
         }
     }

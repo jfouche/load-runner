@@ -36,6 +36,10 @@ impl Items {
         self.0.push(item);
     }
 
+    pub fn contains(&self, item: Item) -> bool {
+        self.0.contains(&item)
+    }
+
     pub fn contains_items(&self, items: &Items) -> bool {
         for item in items.0.iter() {
             if !self.0.contains(item) {

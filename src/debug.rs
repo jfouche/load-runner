@@ -4,6 +4,7 @@ use bevy_ecs_ldtk::EntityInstance;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier2d::prelude::*;
 
+#[allow(dead_code)]
 pub fn plugin(app: &mut App) {
     app.add_plugins((
         WorldInspectorPlugin::new(),
