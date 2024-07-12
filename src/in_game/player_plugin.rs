@@ -232,10 +232,9 @@ fn player_hits_enemy(
                 commands.entity(player_entity).insert(Dying);
             } else {
                 // Make player invulnerable
-                commands.entity(player_entity).insert((
-                    Invulnerable::new(Duration::from_secs_f32(2.0), GROUP_ENEMY),
-                    Blink::new(Duration::from_secs_f32(0.15)),
-                ));
+                commands
+                    .entity(player_entity)
+                    .insert(Invulnerable::new(Duration::from_secs_f32(2.0), GROUP_ENEMY));
             }
         }
     }
