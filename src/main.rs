@@ -32,7 +32,7 @@ fn main() {
             RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(PIXELS_PER_METER),
         ))
         .insert_resource(RapierConfiguration::new(PIXELS_PER_METER))
-        // .add_plugins(debug::plugin)
+        .add_plugins(debug::plugin)
         .add_plugins((
             schedule::schedule_plugin,
             utils::UtilsPlugins,
