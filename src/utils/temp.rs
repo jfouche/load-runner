@@ -6,6 +6,7 @@ use bevy::prelude::*;
 pub struct Temporary(Timer);
 
 impl Temporary {
+    #[allow(dead_code)]
     pub fn new(duration: Duration) -> Self {
         Temporary(Timer::new(duration, TimerMode::Once))
     }

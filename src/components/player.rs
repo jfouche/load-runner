@@ -6,7 +6,9 @@ use bevy_rapier2d::prelude::*;
 
 #[derive(Resource)]
 pub struct PlayerAssets {
+    #[allow(dead_code)]
     pub walk_sprites: Handle<Image>,
+    #[allow(dead_code)]
     pub walk_atlas_layout: Handle<TextureAtlasLayout>,
     pub death_sprites: Handle<Image>,
     pub death_atlas_layout: Handle<TextureAtlasLayout>,

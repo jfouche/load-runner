@@ -64,3 +64,48 @@ where
         self == &v1 || self == &v2
     }
 }
+
+//
+// TODO: finish it
+// Trait to filter a collision with 2 queries
+//
+// pub trait CollisionEventFilter {
+//     fn start<'w, D1, F1, D2, F2>(
+//         &self,
+//         q1: Query<'w, '_, D1, F1>,
+//         q2: Query<'w, '_, D2, F2>,
+//     ) -> Option<(ROQueryItem<'w, D1>, ROQueryItem<'w, D2>)>
+//     where
+//         D1: QueryData<ReadOnly = D1>,
+//         F1: QueryFilter,
+//         D2: QueryData,
+//         F2: QueryFilter;
+// }
+
+// impl CollisionEventFilter for CollisionEvent {
+//     fn start<'w, D1, F1, D2, F2>(
+//         &self,
+//         q1: Query<'w, '_, D1, F1>,
+//         q2: Query<'w, '_, D2, F2>,
+//     ) -> Option<(ROQueryItem<'w, D1>, ROQueryItem<'w, D2>)>
+//     where
+//         D1: QueryData<ReadOnly = D1>,
+//         F1: QueryFilter,
+//         D2: QueryData,
+//         F2: QueryFilter,
+//     {
+//         if let CollisionEvent::Started(e1, e2, _) = self {
+//             let res = q1
+//                 .get(*e1)
+//                 .map(move |r1| (r1, q2.get(*e2)))
+//                 .or(q1.get(*e2).map(|r1| (r1, q2.get(*e1))));
+
+//             match res {
+//                 Ok((r1, Ok(r2))) => Some((r1, r2)),
+//                 _ => None,
+//             }
+//         } else {
+//             None
+//         }
+//     }
+// }

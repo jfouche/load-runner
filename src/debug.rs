@@ -4,6 +4,7 @@ use bevy_ecs_ldtk::EntityInstance;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier2d::prelude::*;
 
+#[allow(dead_code)]
 pub fn plugin(app: &mut App) {
     app.add_plugins((
         WorldInspectorPlugin::new(),
@@ -13,10 +14,10 @@ pub fn plugin(app: &mut App) {
         Update,
         (toggle_grab, display_player_items).in_set(InGameSet::UserInput),
     )
-    .add_systems(
-        Update,
-        (display_collision_events,).after(InGameSet::EntityUpdate),
-    )
+    // .add_systems(
+    //     Update,
+    //     (display_collision_events,).after(InGameSet::EntityUpdate),
+    // )
     // States
     .add_systems(
         Update,
@@ -45,6 +46,7 @@ fn toggle_grab(
     }
 }
 
+#[allow(dead_code)]
 fn display_collision_events(mut collisions: EventReader<CollisionEvent>, names: Query<DebugName>) {
     let get_name = |e| {
         names

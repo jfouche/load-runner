@@ -19,7 +19,16 @@ const PIXELS_PER_METER: f32 = 100.0;
 fn main() {
     App::new()
         .add_plugins((
-            DefaultPlugins.set(ImagePlugin::default_nearest()),
+            DefaultPlugins
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        title: "Load-Runner".into(),
+                        position: WindowPosition::At(IVec2::ZERO),
+                        ..Default::default()
+                    }),
+                    ..Default::default()
+                })
+                .set(ImagePlugin::default_nearest()),
             RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(PIXELS_PER_METER),
         ))
         .insert_resource(RapierConfiguration::new(PIXELS_PER_METER))

@@ -7,19 +7,22 @@ use bevy_rapier2d::prelude::*;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Reflect)]
 pub enum Item {
-    Unknown,
-    Knife,
+    Gem,
     Boots,
     Key,
+    Unknown,
 }
 
 impl From<&String> for Item {
     fn from(value: &String) -> Self {
         match value.as_str() {
-            "Knife" => Item::Knife,
+            "Gem" => Item::Gem,
             "Boots" => Item::Boots,
             "Key" => Item::Key,
-            _ => Item::Unknown,
+            _ => {
+                error!("Unknown item {value}");
+                Item::Unknown
+            }
         }
     }
 }
@@ -34,6 +37,10 @@ impl Items {
 
     pub fn add(&mut self, item: Item) {
         self.0.push(item);
+    }
+
+    pub fn contains(&self, item: Item) -> bool {
+        self.0.contains(&item)
     }
 
     pub fn contains_items(&self, items: &Items) -> bool {
@@ -107,11 +114,11 @@ pub struct ItemAssets {
 }
 
 impl ItemAssets {
-    pub fn image_bundle(&self, item: Item) -> impl Bundle {
+    pub fn image_bundle(&self, item: Item) -> (TextureAtlas, UiImage) {
         let index = match item {
             Item::Boots => 18,
             Item::Key => 83,
-            Item::Knife => 19,
+            Item::Gem => 1483,
             Item::Unknown => 0,
         };
         (
@@ -119,51 +126,7 @@ impl ItemAssets {
                 layout: self.texture_atlas_layout.clone(),
                 index,
             },
-            ImageBundle {
-                image: UiImage::new(self.texture.clone()),
-                ..default()
-            },
+            UiImage::new(self.texture.clone()),
         )
     }
-}
-
-#[derive(Component, Clone, Copy)]
-pub struct ItemsWindow;
-
-#[derive(Bundle)]
-pub struct ItemsWindowBundle {
-    tag: ItemsWindow,
-    name: Name,
-    items: Items,
-    over: Over,
-}
-
-impl ItemsWindowBundle {
-    pub fn new(items: Items, over: Entity) -> Self {
-        ItemsWindowBundle {
-            tag: ItemsWindow,
-            name: Name::new("ItemsWindow"),
-            items,
-            over: Over {
-                entity: over,
-                offset: Vec3::ZERO,
-            },
-        }
-    }
-
-    pub fn with_offset(self, offset: Vec3) -> Self {
-        ItemsWindowBundle {
-            over: Over {
-                offset,
-                ..self.over
-            },
-            ..self
-        }
-    }
-}
-
-#[derive(Component, Clone, Copy, Reflect)]
-pub struct Over {
-    pub entity: Entity,
-    pub offset: Vec3,
 }

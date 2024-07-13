@@ -5,12 +5,14 @@ use bevy_rapier2d::prelude::*;
 mod character_plugin;
 mod collisions;
 mod death_menu;
+mod end_level_menu;
 mod enemy_plugin;
 mod hud_plugin;
 mod item_plugin;
 mod level_plugin;
 mod pause_menu;
 mod player_plugin;
+mod popup;
 
 pub const GROUP_PLAYER: Group = Group::GROUP_1;
 pub const GROUP_ENEMY: Group = Group::GROUP_2;
@@ -28,6 +30,8 @@ impl PluginGroup for InGamePlugins {
             .add(player_plugin::player_plugin)
             .add(pause_menu::pause_menu_plugin)
             .add(item_plugin::item_plugin)
+            .add(end_level_menu::end_level_menu_plugin)
+            .add(popup::popup_plugin)
             .add(in_game_plugin)
     }
 }
@@ -40,6 +44,8 @@ fn in_game_plugin(app: &mut App) {
         .add_systems(OnExit(InGameState::Running), (ungrab_cursor, stop_physics))
         .add_systems(OnEnter(InGameState::Pause), pause)
         .add_systems(OnExit(InGameState::Pause), unpause)
+        .add_systems(OnEnter(InGameState::ShowPopup), pause)
+        .add_systems(OnExit(InGameState::ShowPopup), unpause)
         .add_systems(Update, switch_to_pause.in_set(InGameSet::UserInput));
 }
 
