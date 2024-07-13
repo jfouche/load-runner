@@ -4,6 +4,11 @@ use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 use std::collections::{HashMap, HashSet};
 
+pub const DIRT_INT_CELL: i32 = 1;
+pub const LADDER_INT_CELL: i32 = 2;
+pub const STONE_INT_CELL: i32 = 3;
+pub const WATER_INT_CELL: i32 = 4;
+
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
 pub struct Wall;
 
