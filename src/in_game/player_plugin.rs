@@ -31,22 +31,22 @@ fn load_assets(
     // WALK
     let walk_sprites = asset_server.load("player/walk.png");
     let walk_layout = TextureAtlasLayout::from_grid(
-        Vec2::splat(16.0),
+        UVec2::splat(16),
         8,
         4,
-        Some(Vec2::splat(64.0)),
-        Some(Vec2::splat(32.0)),
+        Some(UVec2::splat(64)),
+        Some(UVec2::splat(32)),
     );
     let walk_atlas_layout = texture_atlas_layouts.add(walk_layout);
 
     // DEATH
     let death_sprites = asset_server.load("player/death.png");
     let death_layout = TextureAtlasLayout::from_grid(
-        Vec2::splat(16.0),
+        UVec2::splat(16),
         6,
         4,
-        Some(Vec2::splat(64.0)),
-        Some(Vec2::splat(32.0)),
+        Some(UVec2::splat(64)),
+        Some(UVec2::splat(32)),
     );
     let death_atlas_layout = texture_atlas_layouts.add(death_layout);
 
@@ -66,11 +66,11 @@ fn set_texture_atlas(
 ) {
     if let Ok(mut atlas) = players.get_single_mut() {
         let layout = TextureAtlasLayout::from_grid(
-            Vec2::splat(16.0),
+            UVec2::splat(16),
             8,
             4,
-            Some(Vec2::splat(64.0)),
-            Some(Vec2::splat(32.0)),
+            Some(UVec2::splat(64)),
+            Some(UVec2::splat(32)),
         );
         let texture_atlas_layout = texture_atlas_layouts.add(layout);
         atlas.layout = texture_atlas_layout;

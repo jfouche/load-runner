@@ -67,7 +67,7 @@ pub struct MobBundle {
     name: Name,
     damage: Damage,
     #[sprite_sheet_bundle]
-    sprite_sheet_bundle: SpriteSheetBundle,
+    sprite_sheet_bundle: LdtkSpriteSheetBundle,
     collider_bundle: ColliderBundle,
     collision_groups: CollisionGroups,
     #[ldtk_entity]
@@ -80,7 +80,7 @@ impl Default for MobBundle {
             enemy: Enemy,
             name: Name::new("Enemy - Mob"),
             damage: Damage(2),
-            sprite_sheet_bundle: SpriteSheetBundle::default(),
+            sprite_sheet_bundle: LdtkSpriteSheetBundle::default(),
             collider_bundle: ColliderBundle {
                 collider: Collider::cuboid(5., 5.),
                 rigid_body: RigidBody::KinematicVelocityBased,

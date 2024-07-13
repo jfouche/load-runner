@@ -82,7 +82,7 @@ fn display_states(game_state: Res<State<GameState>>, in_game_state: Res<State<In
 fn state_transition<S: States>(mut events: EventReader<StateTransitionEvent<S>>) {
     for event in events.read() {
         let name = std::any::type_name::<S>();
-        info!("{name} : {:?} => {:?}", event.before, event.after);
+        info!("{name} : {event:?}");
     }
 }
 

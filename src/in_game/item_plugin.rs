@@ -15,7 +15,7 @@ fn load_assets(
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     let texture = asset_server.load("atlas/MV Icons Complete Sheet Free - ALL.png");
-    let layout = TextureAtlasLayout::from_grid(Vec2::new(32.0, 32.0), 16, 95, None, None);
+    let layout = TextureAtlasLayout::from_grid(UVec2::new(32, 32), 16, 95, None, None);
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
     let assets = ItemAssets {
         texture,
@@ -56,8 +56,8 @@ fn open_chest(
             for &item in chest_items.iter() {
                 let bundle = assets.image_bundle(item);
                 popup_content.add_image(PopupImage::AtlasImage {
-                    texture_atlas: bundle.texture_atlas,
-                    image: bundle.image,
+                    texture_atlas: bundle.0,
+                    image: bundle.1,
                 });
             }
             commands.spawn(PopupBundle::new(popup_content));

@@ -116,7 +116,7 @@ fn close_popup(
 fn popup() -> NodeBundle {
     let vsizer = vsizer();
     NodeBundle {
-        background_color: Color::rgb(0.25, 0.25, 0.25).into(),
+        background_color: Color::srgb(0.25, 0.25, 0.25).into(),
         border_color: Color::BLACK.into(),
         style: Style {
             border: UiRect::all(Val::Px(2.0)),
@@ -136,7 +136,7 @@ fn popup() -> NodeBundle {
 
 fn popup_title_bar() -> NodeBundle {
     NodeBundle {
-        background_color: Color::rgb(0.1, 0.1, 0.1).into(),
+        background_color: Color::srgb(0.1, 0.1, 0.1).into(),
         style: Style {
             width: Val::Percent(100.0),
             justify_content: JustifyContent::Center,
@@ -152,7 +152,7 @@ fn popup_title(title: &str) -> TextBundle {
         title,
         TextStyle {
             font_size: 32.0,
-            color: Color::rgb(0.72, 0.72, 0.72),
+            color: Color::srgb(0.72, 0.72, 0.72),
             ..default()
         },
     )
@@ -173,15 +173,17 @@ fn popup_text_content(content: &str) -> TextBundle {
     })
 }
 
-fn popup_image(image: &PopupImage) -> impl Bundle {
+fn popup_image(image: &PopupImage) -> (TextureAtlas, ImageBundle) {
     match image {
         PopupImage::AtlasImage {
             texture_atlas,
             image,
-        } => AtlasImageBundle {
-            texture_atlas: texture_atlas.clone(),
-            image: image.clone(),
-            ..Default::default()
-        },
+        } => (
+            texture_atlas.clone(),
+            ImageBundle {
+                image: image.clone(),
+                ..Default::default()
+            },
+        ),
     }
 }

@@ -51,7 +51,7 @@ pub fn level_plugin(app: &mut App) {
         .add_systems(Update, restart_level.in_set(InGameSet::UserInput));
 }
 
-const END_LEVEL_FADE_COLOR: Color = Color::rgba(0.0, 0.0, 0.8, 1.0);
+const END_LEVEL_FADE_COLOR: Color = Color::srgba(0.0, 0.0, 0.8, 1.0);
 
 fn show_level(mut commands: Commands) {
     info!("show_level()");
@@ -336,8 +336,8 @@ fn open_door(
                 for &item in expected_items.iter() {
                     let bundle = assets.image_bundle(item);
                     popup_content.add_image(PopupImage::AtlasImage {
-                        texture_atlas: bundle.texture_atlas,
-                        image: bundle.image,
+                        texture_atlas: bundle.0,
+                        image: bundle.1,
                     });
                 }
                 commands.spawn(PopupBundle::new(popup_content));

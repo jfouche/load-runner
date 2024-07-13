@@ -2,7 +2,7 @@ use crate::{
     components::{despawn_all, GameState},
     ui::*,
 };
-use bevy::{app::AppExit, prelude::*};
+use bevy::{app::AppExit, color::palettes::css::GRAY, prelude::*};
 
 pub fn main_menu_plugin(app: &mut App) {
     app.add_systems(OnEnter(GameState::Menu), (set_background, spawn_menu))
@@ -30,7 +30,7 @@ enum MenuButtonAction {
 }
 
 fn set_background(mut commands: Commands) {
-    commands.insert_resource(ClearColor(Color::GRAY));
+    commands.insert_resource(ClearColor(GRAY.into()));
 }
 
 fn spawn_menu(mut commands: Commands) {
@@ -61,7 +61,7 @@ fn menu_action(
         if *interaction == Interaction::Pressed {
             match menu_button_action {
                 MenuButtonAction::ExitApplication => {
-                    app_exit_events.send(AppExit);
+                    app_exit_events.send(AppExit::Success);
                 }
                 MenuButtonAction::PlayGame => {
                     next_game_state.set(GameState::InGame);

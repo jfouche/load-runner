@@ -30,7 +30,7 @@ fn spawn_player_items(mut commands: Commands) {
         HudPlayerItems,
         Hud,
         NodeBundle {
-            background_color: Color::rgba(0.3, 0.3, 0.3, 0.2).into(),
+            background_color: Color::srgba(0.3, 0.3, 0.3, 0.2).into(),
             style: Style {
                 position_type: PositionType::Absolute,
                 top: Val::Px(10.0),
@@ -58,7 +58,7 @@ fn spawn_player_life(mut commands: Commands) {
             },
             ..Default::default()
         },
-        ProgressBar::new(0.0, 10.0, 10.0).with_colors(Color::BLACK, Color::RED),
+        ProgressBar::new(0.0, 10.0, 10.0).with_colors(Color::BLACK, Srgba::RED.into()),
     ));
 }
 
