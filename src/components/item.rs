@@ -76,7 +76,7 @@ pub struct ChestBundle {
     #[from_entity_instance]
     items: Items,
     #[sprite_sheet_bundle]
-    sprite_sheet_bundle: SpriteSheetBundle,
+    sprite_sheet_bundle: LdtkSpriteSheetBundle,
     collider_bundle: ColliderBundle,
 }
 
@@ -86,7 +86,7 @@ impl Default for ChestBundle {
             tag: Chest,
             name: Name::new("Chest"),
             items: Items::default(),
-            sprite_sheet_bundle: SpriteSheetBundle::default(),
+            sprite_sheet_bundle: LdtkSpriteSheetBundle::default(),
             collider_bundle: ColliderBundle {
                 collider: Collider::cuboid(8., 8.),
                 rigid_body: RigidBody::Dynamic,
@@ -107,21 +107,23 @@ pub struct ItemAssets {
 }
 
 impl ItemAssets {
-    pub fn image_bundle(&self, item: Item) -> AtlasImageBundle {
+    pub fn image_bundle(&self, item: Item) -> impl Bundle {
         let index = match item {
             Item::Boots => 18,
             Item::Key => 83,
             Item::Knife => 19,
             Item::Unknown => 0,
         };
-        AtlasImageBundle {
-            texture_atlas: TextureAtlas {
+        (
+            TextureAtlas {
                 layout: self.texture_atlas_layout.clone(),
                 index,
             },
-            image: UiImage::new(self.texture.clone()),
-            ..default()
-        }
+            ImageBundle {
+                image: UiImage::new(self.texture.clone()),
+                ..default()
+            },
+        )
     }
 }
 

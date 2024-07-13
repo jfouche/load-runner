@@ -19,7 +19,7 @@ fn load_assets(
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     let texture = asset_server.load("atlas/MV Icons Complete Sheet Free - ALL.png");
-    let layout = TextureAtlasLayout::from_grid(Vec2::new(32.0, 32.0), 16, 95, None, None);
+    let layout = TextureAtlasLayout::from_grid(UVec2::new(32, 32), 16, 95, None, None);
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
     let assets = ItemAssets {
         texture,
@@ -101,7 +101,7 @@ fn spawn_items_wnd(
                     .spawn((
                         Temporary::new(Duration::from_secs(2)),
                         NodeBundle {
-                            background_color: Color::rgba(0.3, 0.3, 0.3, 0.2).into(),
+                            background_color: Color::srgba(0.3, 0.3, 0.3, 0.2).into(),
                             style: Style {
                                 position_type: PositionType::Absolute,
                                 top: Val::Px(screen_pos.y),

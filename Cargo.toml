@@ -18,9 +18,6 @@ codegen-units = 1
 
 [dependencies]
 bevy = "0.14"
-bevy_rapier2d = {git = "https://github.com/dimforge/bevy_rapier", rev="f97027d"}
-bevy_ecs_ldtk = { git = "https://github.com/MScottMcBee/bevy_ecs_ldtk", rev="617b108"}
+bevy_rapier2d = "0.27"
+bevy_ecs_ldtk = { git = "https://github.com/MScottMcBee/bevy_ecs_ldtk", rev="dd5b2be"}
 bevy-inspector-egui="0.25.0"
-
-[patch.crates-io]
-bevy_ecs_tilemap = { git = "https://github.com/ChristopherBiscardi/bevy_ecs_tilemap.git", branch = "bevy-0.14", default-features = false}  

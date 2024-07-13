@@ -17,7 +17,7 @@ struct SplashScreen;
 #[derive(Component)]
 struct SplashScreenMessage;
 
-const BACKGROUND_COLOR: Color = Color::rgb(0.4, 0.4, 0.4);
+const BACKGROUND_COLOR: Color = Color::srgb(0.4, 0.4, 0.4);
 
 fn spawn_splash_screen(mut commands: Commands) {
     commands.insert_resource(ClearColor(BACKGROUND_COLOR));
