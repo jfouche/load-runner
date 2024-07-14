@@ -10,9 +10,9 @@ pub fn level_plugin(app: &mut App) {
     app.add_plugins(LdtkPlugin)
         .insert_resource(LevelSelection::Uid(0))
         .insert_resource(LdtkSettings {
-            // level_spawn_behavior: LevelSpawnBehavior::UseWorldTranslation {
-            //     load_level_neighbors: true,
-            // },
+            level_spawn_behavior: LevelSpawnBehavior::UseWorldTranslation {
+                load_level_neighbors: true,
+            },
             set_clear_color: SetClearColor::FromLevelBackground,
             ..Default::default()
         })
