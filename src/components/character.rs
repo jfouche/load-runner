@@ -116,5 +116,5 @@ impl Default for AnimationTimer {
 #[derive(Component, Clone, Copy)]
 pub struct Dying;
 
-#[derive(Component, Clone, Copy, Default)]
-pub struct NewItemsInfo;
+#[derive(Component, Clone, Copy, Default, Reflect, Deref)]
+pub struct InWater(pub bool);

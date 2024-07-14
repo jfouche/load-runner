@@ -10,9 +10,9 @@ pub fn level_plugin(app: &mut App) {
     app.add_plugins(LdtkPlugin)
         .insert_resource(LevelSelection::Uid(0))
         .insert_resource(LdtkSettings {
-            level_spawn_behavior: LevelSpawnBehavior::UseWorldTranslation {
-                load_level_neighbors: true,
-            },
+            // level_spawn_behavior: LevelSpawnBehavior::UseWorldTranslation {
+            //     load_level_neighbors: true,
+            // },
             set_clear_color: SetClearColor::FromLevelBackground,
             ..Default::default()
         })
@@ -37,16 +37,12 @@ pub fn level_plugin(app: &mut App) {
         // InGame
         .add_systems(
             Update,
-            (
-                camera_fit_inside_current_level,
-                update_level_selection,
-                update_on_ground,
-            )
+            (camera_fit_inside_current_level, update_level_selection)
                 .in_set(InGameSet::EntityUpdate),
         )
         .add_systems(
             Update,
-            (ground_detection, open_door, end_level).in_set(InGameSet::CollisionDetection),
+            (open_door, end_level).in_set(InGameSet::CollisionDetection),
         )
         .add_systems(Update, restart_level.in_set(InGameSet::UserInput));
 }
@@ -65,9 +61,9 @@ fn start_level(
     mut in_game_state: ResMut<NextState<InGameState>>,
 ) {
     for event in events.read() {
-        if let Some(mut cmd) = commands.get_entity(event.entity) {
+        if let Some(mut fader) = commands.get_entity(event.entity) {
             info!("start_level() - despawn({:?})", event.entity);
-            cmd.despawn();
+            fader.despawn();
         }
         in_game_state.set(InGameState::Running);
     }
@@ -248,50 +244,6 @@ fn update_level_selection(
             {
                 *level_selection = LevelSelection::iid(level.iid.clone());
             }
-        }
-    }
-}
-
-fn ground_detection(
-    mut ground_sensors: Query<&mut GroundSensor>,
-    mut collisions: EventReader<CollisionEvent>,
-    collidables: Query<Entity, (With<Collider>, Without<Sensor>)>,
-) {
-    for collision_event in collisions.read() {
-        match collision_event {
-            CollisionEvent::Started(e1, e2, _) => {
-                if collidables.contains(*e1) {
-                    if let Ok(mut sensor) = ground_sensors.get_mut(*e2) {
-                        sensor.intersecting_ground_entities.insert(*e1);
-                    }
-                } else if collidables.contains(*e2) {
-                    if let Ok(mut sensor) = ground_sensors.get_mut(*e1) {
-                        sensor.intersecting_ground_entities.insert(*e2);
-                    }
-                }
-            }
-            CollisionEvent::Stopped(e1, e2, _) => {
-                if collidables.contains(*e1) {
-                    if let Ok(mut sensor) = ground_sensors.get_mut(*e2) {
-                        sensor.intersecting_ground_entities.remove(e1);
-                    }
-                } else if collidables.contains(*e2) {
-                    if let Ok(mut sensor) = ground_sensors.get_mut(*e1) {
-                        sensor.intersecting_ground_entities.remove(e2);
-                    }
-                }
-            }
-        }
-    }
-}
-
-fn update_on_ground(
-    mut ground_detectors: Query<&mut GroundDetection>,
-    ground_sensors: Query<&GroundSensor, Changed<GroundSensor>>,
-) {
-    for sensor in &ground_sensors {
-        if let Ok(mut ground_detection) = ground_detectors.get_mut(sensor.ground_detection_entity) {
-            ground_detection.on_ground = !sensor.intersecting_ground_entities.is_empty();
         }
     }
 }

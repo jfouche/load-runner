@@ -4,6 +4,11 @@ use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 use std::collections::{HashMap, HashSet};
 
+pub const ENTITIES_LAYER: usize = 0;
+pub const WALL_SHADOWS_LAYER: usize = 1;
+pub const COLLISIONS_LAYER: usize = 2;
+pub const BG_TEXTURES_LAYER: usize = 3;
+
 pub const DIRT_INT_CELL: i32 = 1;
 pub const LADDER_INT_CELL: i32 = 2;
 pub const STONE_INT_CELL: i32 = 3;

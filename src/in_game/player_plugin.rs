@@ -176,17 +176,33 @@ fn animate_death(
 
 fn movement(
     input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Velocity, &mut Climber, &GroundDetection, &Items), With<Player>>,
+    mut query: Query<
+        (
+            &mut Velocity,
+            &mut Climber,
+            &GroundDetection,
+            &Items,
+            &InWater,
+        ),
+        With<Player>,
+    >,
 ) {
+    const WATER_MOVE_SPEED: f32 = 40.;
     const MOVE_SPEED: f32 = 120.;
     const SMALL_JUMP_SPEED: f32 = 160.;
     const BIG_JUMP_SPEED: f32 = 280.;
 
-    for (mut velocity, mut climber, ground_detection, items) in &mut query {
+    for (mut velocity, mut climber, ground_detection, items, &in_water) in &mut query {
         let right = if input.pressed(KeyCode::KeyD) { 1. } else { 0. };
         let left = if input.pressed(KeyCode::KeyA) { 1. } else { 0. };
+        let up = if input.pressed(KeyCode::KeyW) { 1. } else { 0. };
+        let down = if input.pressed(KeyCode::KeyS) { 1. } else { 0. };
 
-        velocity.linvel.x = (right - left) * MOVE_SPEED;
+        velocity.linvel.x = if *in_water {
+            (right - left) * WATER_MOVE_SPEED
+        } else {
+            (right - left) * MOVE_SPEED
+        };
 
         if climber.intersecting_climbables.is_empty() {
             climber.climbing = false;
@@ -194,14 +210,17 @@ fn movement(
             climber.climbing = true;
         }
 
+        if *in_water {
+            velocity.linvel.y = (up - down) * WATER_MOVE_SPEED;
+        }
         if climber.climbing {
-            let up = if input.pressed(KeyCode::KeyW) { 1. } else { 0. };
-            let down = if input.pressed(KeyCode::KeyS) { 1. } else { 0. };
-
             velocity.linvel.y = (up - down) * MOVE_SPEED;
         }
 
-        if input.just_pressed(KeyCode::Space) && (ground_detection.on_ground || climber.climbing) {
+        // Jump
+        if input.just_pressed(KeyCode::Space)
+            && (ground_detection.on_ground || climber.climbing || *in_water)
+        {
             velocity.linvel.y = if items.contains(Item::Boots) {
                 BIG_JUMP_SPEED
             } else {

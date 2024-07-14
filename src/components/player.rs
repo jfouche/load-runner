@@ -33,6 +33,7 @@ pub struct PlayerBundle {
     worldly: Worldly,
     climber: Climber,
     ground_detection: GroundDetection,
+    in_water: InWater,
     // Build Items Component manually by using `impl From<&EntityInstance>`
     #[from_entity_instance]
     items: Items,
@@ -65,6 +66,7 @@ impl Default for PlayerBundle {
             worldly: Worldly::default(),
             climber: Climber::default(),
             ground_detection: GroundDetection::default(),
+            in_water: InWater(false),
             items: Items::default(),
             entity_instance: EntityInstance::default(),
         }
