@@ -19,6 +19,7 @@ pub fn level_plugin(app: &mut App) {
         .register_ldtk_int_cell::<WallBundle>(DIRT_INT_CELL)
         .register_ldtk_int_cell::<LadderBundle>(LADDER_INT_CELL)
         .register_ldtk_int_cell::<WallBundle>(STONE_INT_CELL)
+        .register_ldtk_int_cell::<WaterBundle>(WATER_INT_CELL)
         .register_ldtk_entity::<PlayerBundle>("Player")
         .register_ldtk_entity::<MobBundle>("Mob")
         .register_ldtk_entity::<ChestBundle>("Chest")

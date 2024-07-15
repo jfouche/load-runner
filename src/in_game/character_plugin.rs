@@ -1,6 +1,6 @@
 use crate::{components::*, schedule::InGameSet};
 use bevy::prelude::*;
-use bevy_ecs_ldtk::prelude::*;
+use bevy_ecs_ldtk::{prelude::*, utils::translation_to_grid_coords};
 use bevy_rapier2d::prelude::*;
 
 pub fn character_plugin(app: &mut App) {
@@ -114,35 +114,38 @@ fn ground_detection(
 fn update_in_water(
     mut in_waters: Query<(&Transform, &mut InWater)>,
     ldtk_projects: Query<&Handle<LdtkProject>>,
-    level_query: Query<(&Transform, &LevelIid), (Without<OrthographicProjection>, Without<Player>)>,
-    cells: Query<(&GridCoords, &IntGridCell)>,
+    level_query: Query<(Entity, &Transform, &LevelIid), Without<OrthographicProjection>>,
+    water_cells: Query<(&GridCoords, &Parent), With<Water>>,
+    parents: Query<&Parent, Without<Water>>,
     ldtk_project_assets: Res<Assets<LdtkProject>>,
     level_selection: Res<LevelSelection>,
 ) {
-    for (transform, mut in_water) in &mut in_waters {
+    for (character_transform, mut in_water) in &mut in_waters {
         level_query
             .iter()
-            .filter_map(|(transform, level_iid)| {
+            .filter_map(|(entity, transform, iid)| {
                 let ldtk_project = ldtk_project_assets.get(ldtk_projects.single())?;
-                let level = ldtk_project.get_raw_level_by_iid(&level_iid.to_string())?;
+                let level = ldtk_project.get_raw_level_by_iid(&iid.to_string())?;
                 let layer_info = level.layer_instances.as_ref()?.get(COLLISIONS_LAYER)?;
                 level_selection
                     .is_match(&LevelIndices::default(), level)
-                    .then_some((transform, layer_info))
+                    .then_some((entity, transform, layer_info))
             })
-            .for_each(|(level_transform, layer_info)| {
-                let translation = transform.translation.xy();
-                let level_translation = level_transform.translation.xy();
-                let player_coord = GridCoords {
-                    x: ((translation.x - level_translation.x) / (layer_info.grid_size as f32))
-                        as i32,
-                    y: ((translation.y - level_translation.y) / (layer_info.grid_size as f32))
-                        as i32,
-                };
-
-                in_water.0 = cells
-                    .iter()
-                    .any(|(&coord, cell)| cell.value == WATER_INT_CELL && coord == player_coord);
+            .for_each(|(level_entity, level_transform, layer_info)| {
+                let translation =
+                    character_transform.translation.xy() - level_transform.translation.xy();
+                let character_coord =
+                    translation_to_grid_coords(translation, IVec2::splat(layer_info.grid_size));
+                in_water.0 = water_cells.iter().any(|(&coord, parent)| {
+                    if coord == character_coord {
+                        if let Ok(grandparent) = parents.get(parent.get()) {
+                            if grandparent.get() == level_entity {
+                                return true;
+                            }
+                        }
+                    }
+                    false
+                });
             });
     }
 }

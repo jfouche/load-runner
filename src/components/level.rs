@@ -4,10 +4,10 @@ use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 use std::collections::{HashMap, HashSet};
 
-pub const ENTITIES_LAYER: usize = 0;
-pub const WALL_SHADOWS_LAYER: usize = 1;
+pub const _ENTITIES_LAYER: usize = 0;
+pub const _WALL_SHADOWS_LAYER: usize = 1;
 pub const COLLISIONS_LAYER: usize = 2;
-pub const BG_TEXTURES_LAYER: usize = 3;
+pub const _BG_TEXTURES_LAYER: usize = 3;
 
 pub const DIRT_INT_CELL: i32 = 1;
 pub const LADDER_INT_CELL: i32 = 2;
@@ -19,7 +19,15 @@ pub struct Wall;
 
 #[derive(Clone, Debug, Default, Bundle, LdtkIntCell)]
 pub struct WallBundle {
-    wall: Wall,
+    tag: Wall,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
+pub struct Water;
+
+#[derive(Clone, Debug, Default, Bundle, LdtkIntCell)]
+pub struct WaterBundle {
+    tag: Water,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
