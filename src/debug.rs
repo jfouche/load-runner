@@ -103,7 +103,7 @@ fn display_player_position(
                     player_transform.translation.xy() - level_transform.translation.xy();
                 let character_coord =
                     translation_to_grid_coords(translation, IVec2::splat(layer_info.grid_size));
-                info!("update_in_water: coord: {character_coord:?}");
+                info!("player coords: {character_coord:?}");
             });
     }
 }

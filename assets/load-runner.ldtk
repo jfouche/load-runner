@@ -11,7 +11,7 @@
 	"iid": "39227760-c640-11ed-bac6-0b5f56187457",
 	"jsonVersion": "1.5.3",
 	"appBuildId": 473703,
-	"nextUid": 134,
+	"nextUid": 135,
 	"identifierStyle": "Capitalize",
 	"toc": [],
 	"worldLayout": "Free",
@@ -2036,6 +2036,43 @@
 					"allowedRefsEntityUid": null,
 					"allowedRefTags": [],
 					"tilesetUid": null
+				},
+				{
+					"identifier": "life",
+					"doc": null,
+					"__type": "Int",
+					"uid": 134,
+					"type": "F_Int",
+					"isArray": false,
+					"canBeNull": false,
+					"arrayMinLength": null,
+					"arrayMaxLength": null,
+					"editorDisplayMode": "Hidden",
+					"editorDisplayScale": 1,
+					"editorDisplayPos": "Above",
+					"editorLinkStyle": "StraightArrow",
+					"editorDisplayColor": null,
+					"editorAlwaysShow": false,
+					"editorShowInWorld": true,
+					"editorCutLongValues": true,
+					"editorTextSuffix": null,
+					"editorTextPrefix": null,
+					"useForSmartColor": false,
+					"exportToToc": false,
+					"searchable": false,
+					"min": null,
+					"max": null,
+					"regex": null,
+					"acceptFileTypes": null,
+					"defaultOverride": { "id": "V_Int", "params": [1] },
+					"textLanguageMode": null,
+					"symmetricalRef": false,
+					"autoChainRef": true,
+					"allowOutOfLevelRef": true,
+					"allowedRefs": "OnlySame",
+					"allowedRefsEntityUid": null,
+					"allowedRefTags": [],
+					"tilesetUid": null
 				}
 			]
 		},
@@ -2380,7 +2417,8 @@
 								{ "__identifier": "patrol", "__type": "Array<Point>", "__value": [{ "cx": 27, "cy": 26 }], "__tile": null, "defUid": 55, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["27,26"]
-								}] }
+								}] },
+								{ "__identifier": "life", "__type": "Int", "__value": 1, "__tile": null, "defUid": 134, "realEditorValues": [] }
 							],
 							"__worldX": 264,
 							"__worldY": 288

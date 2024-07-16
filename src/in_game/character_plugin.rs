@@ -71,10 +71,14 @@ fn ignore_gravity_if_climbing(mut query: Query<(&Climber, &mut GravityScale), Ch
 fn update_on_ground(
     mut ground_detectors: Query<&mut GroundDetection>,
     ground_sensors: Query<&GroundSensor, Changed<GroundSensor>>,
+    walls: Query<(), With<Wall>>,
 ) {
     for sensor in &ground_sensors {
         if let Ok(mut ground_detection) = ground_detectors.get_mut(sensor.ground_detection_entity) {
-            ground_detection.on_ground = !sensor.intersecting_ground_entities.is_empty();
+            ground_detection.on_ground = !sensor
+                .intersecting_ground_entities
+                .iter()
+                .any(|e| walls.get(*e).is_ok());
         }
     }
 }
@@ -137,13 +141,11 @@ fn update_in_water(
                     character_transform.translation.xy() - level_transform.translation.xy();
                 let character_coord =
                     translation_to_grid_coords(translation, IVec2::splat(layer_info.grid_size));
-                warn!("update_in_water: coord: {character_coord:?}");
 
                 in_water.0 = water_cells.iter().any(|(&coord, parent)| {
                     if coord == character_coord {
                         if let Ok(grandparent) = parents.get(parent.get()) {
                             if grandparent.get() == level_entity {
-                                warn!("update_in_water: coord: {coord:?}, level: {level_entity:?}");
                                 return true;
                             }
                         }

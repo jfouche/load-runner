@@ -65,6 +65,8 @@ impl LdtkEntity for Patrol {
 pub struct MobBundle {
     enemy: Enemy,
     name: Name,
+    #[from_entity_instance]
+    life: Life,
     damage: Damage,
     #[sprite_sheet_bundle]
     sprite_sheet_bundle: LdtkSpriteSheetBundle,
@@ -79,10 +81,11 @@ impl Default for MobBundle {
         MobBundle {
             enemy: Enemy,
             name: Name::new("Enemy - Mob"),
+            life: Life::default(),
             damage: Damage(2),
             sprite_sheet_bundle: LdtkSpriteSheetBundle::default(),
             collider_bundle: ColliderBundle {
-                collider: Collider::cuboid(5., 5.),
+                collider: Collider::cuboid(15., 15.),
                 rigid_body: RigidBody::KinematicVelocityBased,
                 rotation_constraints: LockedAxes::ROTATION_LOCKED,
                 ..Default::default()

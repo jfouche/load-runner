@@ -19,7 +19,7 @@ pub fn player_plugin(app: &mut App) {
         )
         .add_systems(
             Update,
-            player_touches_enemy.in_set(InGameSet::CollisionDetection),
+            (enemy_hit_player, player_hits_enemy).in_set(InGameSet::CollisionDetection),
         );
 }
 
@@ -231,7 +231,7 @@ fn movement(
     }
 }
 
-fn player_touches_enemy(
+fn enemy_hit_player(
     mut commands: Commands,
     mut collisions: EventReader<CollisionEvent>,
     mut players: Query<(Entity, &mut Life), With<Player>>,
@@ -255,6 +255,27 @@ fn player_touches_enemy(
                     .entity(player_entity)
                     .insert(Invulnerable::new(Duration::from_secs_f32(2.0), GROUP_ENEMY));
             }
+        }
+    }
+}
+
+fn player_hits_enemy(
+    mut commands: Commands,
+    ground_detectors: Query<(), With<Player>>,
+    ground_sensors: Query<&GroundSensor, Changed<GroundSensor>>,
+    mut enemies: Query<(Entity, &mut Life), With<Enemy>>,
+) {
+    for sensor in &ground_sensors {
+        if ground_detectors.get(sensor.ground_detection_entity).is_ok() {
+            sensor.intersecting_ground_entities.iter().for_each(|e| {
+                if let Ok((entity, mut life)) = enemies.get_mut(*e) {
+                    life.hit(1);
+                    if life.is_dead() {
+                        // TODO: do not kill it like this
+                        commands.entity(entity).despawn_recursive();
+                    }
+                }
+            });
         }
     }
 }
