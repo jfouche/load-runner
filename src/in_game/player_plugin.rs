@@ -19,7 +19,7 @@ pub fn player_plugin(app: &mut App) {
         )
         .add_systems(
             Update,
-            player_hits_enemy.in_set(InGameSet::CollisionDetection),
+            player_touches_enemy.in_set(InGameSet::CollisionDetection),
         );
 }
 
@@ -181,28 +181,27 @@ fn movement(
             &mut Velocity,
             &mut Climber,
             &GroundDetection,
+            &Speed,
             &Items,
             &InWater,
         ),
         With<Player>,
     >,
 ) {
-    const WATER_MOVE_SPEED: f32 = 40.;
-    const MOVE_SPEED: f32 = 120.;
+    const WATER_PENALTY: f32 = 0.4;
     const SMALL_JUMP_SPEED: f32 = 160.;
     const BIG_JUMP_SPEED: f32 = 280.;
 
-    for (mut velocity, mut climber, ground_detection, items, &in_water) in &mut query {
+    for (mut velocity, mut climber, ground_detection, &speed, items, &in_water) in &mut query {
         let right = if input.pressed(KeyCode::KeyD) { 1. } else { 0. };
         let left = if input.pressed(KeyCode::KeyA) { 1. } else { 0. };
         let up = if input.pressed(KeyCode::KeyW) { 1. } else { 0. };
         let down = if input.pressed(KeyCode::KeyS) { 1. } else { 0. };
 
-        velocity.linvel.x = if *in_water {
-            (right - left) * WATER_MOVE_SPEED
-        } else {
-            (right - left) * MOVE_SPEED
-        };
+        velocity.linvel.x = (right - left) * *speed;
+        if *in_water {
+            velocity.linvel.x *= WATER_PENALTY;
+        }
 
         if climber.intersecting_climbables.is_empty() {
             climber.climbing = false;
@@ -211,10 +210,11 @@ fn movement(
         }
 
         if *in_water {
-            velocity.linvel.y = (up - down) * WATER_MOVE_SPEED;
+            velocity.linvel.y = (up - down) * *speed * WATER_PENALTY;
         }
+
         if climber.climbing {
-            velocity.linvel.y = (up - down) * MOVE_SPEED;
+            velocity.linvel.y = (up - down) * *speed;
         }
 
         // Jump
@@ -231,7 +231,7 @@ fn movement(
     }
 }
 
-fn player_hits_enemy(
+fn player_touches_enemy(
     mut commands: Commands,
     mut collisions: EventReader<CollisionEvent>,
     mut players: Query<(Entity, &mut Life), With<Player>>,

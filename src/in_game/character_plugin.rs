@@ -5,6 +5,7 @@ use bevy_rapier2d::prelude::*;
 
 pub fn character_plugin(app: &mut App) {
     app.register_type::<Life>()
+        .register_type::<Speed>()
         .register_type::<InWater>()
         .add_systems(
             Update,
@@ -136,10 +137,13 @@ fn update_in_water(
                     character_transform.translation.xy() - level_transform.translation.xy();
                 let character_coord =
                     translation_to_grid_coords(translation, IVec2::splat(layer_info.grid_size));
+                warn!("update_in_water: coord: {character_coord:?}");
+
                 in_water.0 = water_cells.iter().any(|(&coord, parent)| {
                     if coord == character_coord {
                         if let Ok(grandparent) = parents.get(parent.get()) {
                             if grandparent.get() == level_entity {
+                                warn!("update_in_water: coord: {coord:?}, level: {level_entity:?}");
                                 return true;
                             }
                         }

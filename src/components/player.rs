@@ -21,7 +21,10 @@ pub struct Player;
 pub struct PlayerBundle {
     player: Player,
     name: Name,
+    #[from_entity_instance]
     life: Life,
+    #[from_entity_instance]
+    speed: Speed,
     #[sprite_bundle("player/walk.png")]
     sprite_bundle: SpriteBundle,
     texture_atlas: TextureAtlas,
@@ -47,7 +50,8 @@ impl Default for PlayerBundle {
         PlayerBundle {
             player: Player,
             name: Name::new("Player"),
-            life: Life::new(10),
+            life: Life::default(),
+            speed: Speed::default(),
             sprite_bundle: SpriteBundle::default(),
             texture_atlas: TextureAtlas::default(),
             animation_timer: AnimationTimer::default(),

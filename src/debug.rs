@@ -84,60 +84,26 @@ fn display_player_position(
     players: Query<&Transform, With<Player>>,
     ldtk_projects: Query<&Handle<LdtkProject>>,
     level_query: Query<(&Transform, &LevelIid), (Without<OrthographicProjection>, Without<Player>)>,
-    cells: Query<(Entity, &GridCoords, &IntGridCell)>,
     ldtk_project_assets: Res<Assets<LdtkProject>>,
     level_selection: Res<LevelSelection>,
 ) {
     if let Ok(player_transform) = players.get_single() {
-        let ldtk_project = ldtk_project_assets
-            .get(ldtk_projects.single())
-            .expect("Project should be loaded if level has spawned");
-
         level_query
             .iter()
-            .filter_map(|(transform, level_iid)| {
-                let level = ldtk_project
-                    .get_raw_level_by_iid(&level_iid.to_string())
-                    .expect("Spawned level should exist in LDtk project");
+            .filter_map(|(transform, iid)| {
+                let ldtk_project = ldtk_project_assets.get(ldtk_projects.single())?;
+                let level = ldtk_project.get_raw_level_by_iid(&iid.to_string())?;
+                let layer_info = level.layer_instances.as_ref()?.get(COLLISIONS_LAYER)?;
                 level_selection
                     .is_match(&LevelIndices::default(), level)
-                    .then_some((level, transform))
+                    .then_some((transform, layer_info))
             })
-            .for_each(|(level, level_transform)| {
-                let player_translation = dbg!(player_transform.translation.xy());
-                let level_translation = dbg!(level_transform.translation.xy());
-                let layer_info = &level.layer_instances.as_ref().unwrap()[COLLISIONS_LAYER];
-                dbg!(layer_info.grid_size, layer_info.c_hei);
-
-                let player_coord = GridCoords {
-                    x: ((player_translation.x - level_translation.x)
-                        / (layer_info.grid_size as f32)) as i32,
-                    y: ((player_translation.y - level_translation.y)
-                        / (layer_info.grid_size as f32)) as i32,
-                    // y: ((level_translation.y + (layer_info.grid_size * layer_info.c_hei) as f32
-                    //     - player_translation.y)
-                    //     / (layer_info.grid_size as f32)) as i32,
-                };
-                dbg!(player_coord);
-
-                // let translation = player_translation + level_translation;
-                // dbg!(translation);
-                // let grid_coord = translation_to_grid_coords(translation, IVec2::splat(grid_size));
-                // dbg!(grid_coord);
-
-                // let translation = player_translation - level_translation;
-                // dbg!(translation);
-                // let grid_coord = translation_to_grid_coords(translation, IVec2::splat(grid_size));
-                // dbg!(grid_coord);
-
-                if cells.iter().any(|(entity, &coord, cell)| {
-                    dbg!(entity);
-                    cell.value == WATER_INT_CELL && dbg!(coord) == player_coord
-                }) {
-                    warn!("In water");
-                } else {
-                    warn!("Outside");
-                }
+            .for_each(|(level_transform, layer_info)| {
+                let translation =
+                    player_transform.translation.xy() - level_transform.translation.xy();
+                let character_coord =
+                    translation_to_grid_coords(translation, IVec2::splat(layer_info.grid_size));
+                info!("update_in_water: coord: {character_coord:?}");
             });
     }
 }

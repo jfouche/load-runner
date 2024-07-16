@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 use std::collections::HashSet;
 
@@ -22,20 +23,25 @@ impl Movement for Velocity {
     }
 }
 
-#[derive(Component, Clone, Copy, Debug, Reflect)]
+#[derive(Component, Clone, Copy, Default, Debug, Reflect)]
 pub struct Life {
     current: u16,
     // max: u16,
 }
 
-impl Life {
-    pub fn new(life: u16) -> Self {
+impl From<&EntityInstance> for Life {
+    fn from(entity_instance: &EntityInstance) -> Self {
+        let life = entity_instance
+            .get_int_field("life")
+            .expect("[life] field should be correctly typed");
+
         Life {
-            current: life,
-            // max: life,
+            current: *life as u16,
         }
     }
+}
 
+impl Life {
     pub fn get(&self) -> u16 {
         self.current
     }
@@ -55,6 +61,22 @@ impl Life {
     // pub fn add(&mut self, life: u16) {
     //     self.current = std::cmp::min(self.current + life, self.max);
     // }
+}
+
+#[derive(Component, Clone, Copy, Default, Debug, Deref, Reflect)]
+pub struct Speed(pub f32);
+
+impl From<&EntityInstance> for Speed {
+    fn from(entity_instance: &EntityInstance) -> Self {
+        let speed = entity_instance
+            .get_float_field("speed")
+            .expect("[speed] field should be correctly typed");
+        warn!(
+            "From<&EntityInstance> for Speed : {} = {speed:?}",
+            entity_instance.identifier
+        );
+        Speed(*speed)
+    }
 }
 
 #[derive(Clone, Copy, Component)]
