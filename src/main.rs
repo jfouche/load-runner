@@ -4,6 +4,7 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
+mod camera;
 mod components;
 mod cursor;
 mod debug;
@@ -37,15 +38,10 @@ fn main() {
             schedule::schedule_plugin,
             utils::UtilsPlugins,
             ui::UiPlugins,
+            camera::camera_plugin,
             splash::splash_plugin,
             main_menu::main_menu_plugin,
             in_game::InGamePlugins,
         ))
-        .add_systems(Startup, spawn_camera)
         .run();
-}
-
-fn spawn_camera(mut commands: Commands) {
-    let camera = Camera2dBundle::default();
-    commands.spawn(camera);
 }

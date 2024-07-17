@@ -100,11 +100,11 @@ pub struct GroundSensorCollider {
 
 impl GroundSensorCollider {
     pub fn new(parent: Entity, half_extents: Vec2) -> Self {
-        let pos = Vec3::new(0., -half_extents.y, 0.);
+        let pos = Vec3::new(0., -half_extents.y + 1., 0.);
         GroundSensorCollider {
             name: Name::new("GroundSensor"),
             events: ActiveEvents::COLLISION_EVENTS,
-            collider: Collider::cuboid(half_extents.x / 2.0, 2.),
+            collider: Collider::cuboid(half_extents.x / 2.0, 1.),
             sensor: Sensor,
             transform: TransformBundle::from_transform(Transform::from_translation(pos)),
             ground_sensor: GroundSensor {
