@@ -25,6 +25,8 @@ pub struct PlayerBundle {
     life: Life,
     #[from_entity_instance]
     speed: Speed,
+    #[from_entity_instance]
+    jump_speed: JumpSpeed,
     #[sprite_bundle("player/walk.png")]
     sprite_bundle: SpriteBundle,
     texture_atlas: TextureAtlas,
@@ -52,6 +54,7 @@ impl Default for PlayerBundle {
             name: Name::new("Player"),
             life: Life::default(),
             speed: Speed::default(),
+            jump_speed: JumpSpeed::default(),
             sprite_bundle: SpriteBundle::default(),
             texture_atlas: TextureAtlas::default(),
             animation_timer: AnimationTimer::default(),

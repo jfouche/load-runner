@@ -1,6 +1,5 @@
 use crate::{components::*, schedule::InGameSet};
 use bevy::{core_pipeline::bloom::BloomSettings, prelude::*};
-use bevy_ecs_ldtk::prelude::*;
 
 pub fn camera_plugin(app: &mut App) {
     app.add_systems(Startup, spawn_camera)

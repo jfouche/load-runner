@@ -182,17 +182,21 @@ fn movement(
             &mut Climber,
             &GroundDetection,
             &Speed,
+            &JumpSpeed,
             &Items,
             &InWater,
         ),
         With<Player>,
     >,
 ) {
+    const BOOTS_JUMP_BONUS: f32 = 1.55;
     const WATER_PENALTY: f32 = 0.4;
-    const SMALL_JUMP_SPEED: f32 = 160.;
-    const BIG_JUMP_SPEED: f32 = 280.;
+    // const SMALL_JUMP_SPEED: f32 = 160.;
+    // const BIG_JUMP_SPEED: f32 = 280.;
 
-    for (mut velocity, mut climber, ground_detection, &speed, items, &in_water) in &mut query {
+    for (mut velocity, mut climber, ground_detection, &speed, &jump_speed, items, &in_water) in
+        &mut query
+    {
         let right = if input.pressed(KeyCode::KeyD) { 1. } else { 0. };
         let left = if input.pressed(KeyCode::KeyA) { 1. } else { 0. };
         let up = if input.pressed(KeyCode::KeyW) { 1. } else { 0. };
@@ -221,11 +225,10 @@ fn movement(
         if input.just_pressed(KeyCode::Space)
             && (ground_detection.on_ground || climber.climbing || *in_water)
         {
-            velocity.linvel.y = if items.contains(Item::Boots) {
-                BIG_JUMP_SPEED
-            } else {
-                SMALL_JUMP_SPEED
-            };
+            velocity.linvel.y = *jump_speed;
+            if items.contains(Item::Boots) {
+                velocity.linvel.y *= BOOTS_JUMP_BONUS;
+            }
             climber.climbing = false;
         }
     }

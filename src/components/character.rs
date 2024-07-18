@@ -79,6 +79,22 @@ impl From<&EntityInstance> for Speed {
     }
 }
 
+#[derive(Component, Clone, Copy, Default, Debug, Deref, Reflect)]
+pub struct JumpSpeed(pub f32);
+
+impl From<&EntityInstance> for JumpSpeed {
+    fn from(entity_instance: &EntityInstance) -> Self {
+        let speed = entity_instance
+            .get_float_field("jump_speed")
+            .expect("[jump_speed] field should be correctly typed");
+        warn!(
+            "From<&EntityInstance> for JumpSpeed : {} = {speed:?}",
+            entity_instance.identifier
+        );
+        JumpSpeed(*speed)
+    }
+}
+
 #[derive(Clone, Copy, Component)]
 pub struct Damage(pub u16);
 
