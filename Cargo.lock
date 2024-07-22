@@ -592,15 +592,14 @@ dependencies = [
 
 [[package]]
 name = "bevy_ecs_ldtk"
-version = "0.9.0"
-source = "git+https://github.com/MScottMcBee/bevy_ecs_ldtk?rev=dd5b2be#dd5b2be0fa46beb4996d260f2d79bd1acbd1fe54"
+version = "0.10.0"
+source = "git+https://github.com/Trouv/bevy_ecs_ldtk?tag=v0.10.0#c72b5c8d3e6818fe89787a811de14a174ff41ce9"
 dependencies = [
  "bevy",
  "bevy_ecs_ldtk_macros",
  "bevy_ecs_tilemap",
  "derive-getters",
  "derive_more",
- "hex",
  "paste",
  "path-clean",
  "regex",
@@ -611,8 +610,8 @@ dependencies = [
 
 [[package]]
 name = "bevy_ecs_ldtk_macros"
-version = "0.9.0"
-source = "git+https://github.com/MScottMcBee/bevy_ecs_ldtk?rev=dd5b2be#dd5b2be0fa46beb4996d260f2d79bd1acbd1fe54"
+version = "0.10.0"
+source = "git+https://github.com/Trouv/bevy_ecs_ldtk?tag=v0.10.0#c72b5c8d3e6818fe89787a811de14a174ff41ce9"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -634,7 +633,8 @@ dependencies = [
 [[package]]
 name = "bevy_ecs_tilemap"
 version = "0.14.0"
-source = "git+https://github.com/StarArawn/bevy_ecs_tilemap?rev=aee4779c50f22dceaef946218260caf34011a757#aee4779c50f22dceaef946218260caf34011a757"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d880047f5deaf5166ffc08238125a4ccbd2837f781ca6525fa200fcf5785ba3b"
 dependencies = [
  "bevy",
  "log",
@@ -2357,12 +2357,6 @@ name = "hermit-abi"
 version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d231dfb89cfffdbc30e7fc41579ed6066ad03abda9e567ccafae602b97ec5024"
-
-[[package]]
-name = "hex"
-version = "0.4.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "hexasphere"

@@ -19,5 +19,5 @@ codegen-units = 1
 [dependencies]
 bevy = "0.14"
 bevy_rapier2d = "0.27"
-bevy_ecs_ldtk = { git = "https://github.com/MScottMcBee/bevy_ecs_ldtk", rev="dd5b2be"}
+bevy_ecs_ldtk = { git = "https://github.com/Trouv/bevy_ecs_ldtk", tag="v0.10.0"}
 bevy-inspector-egui="0.25.0"
