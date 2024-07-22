@@ -152,7 +152,13 @@ impl Default for AnimationTimer {
 }
 
 #[derive(Component, Clone, Copy)]
+#[component(storage = "SparseSet")]
 pub struct Dying;
 
 #[derive(Component, Clone, Copy, Default, Reflect, Deref)]
+#[component(storage = "SparseSet")]
 pub struct InWater(pub bool);
+
+#[derive(Component, Clone, Copy, Default, Reflect, Deref)]
+#[component(storage = "SparseSet")]
+pub struct Jumping(pub bool);

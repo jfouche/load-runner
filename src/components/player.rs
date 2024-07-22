@@ -6,10 +6,10 @@ use bevy_rapier2d::prelude::*;
 
 #[derive(Resource)]
 pub struct PlayerAssets {
-    #[allow(dead_code)]
     pub walk_sprites: Handle<Image>,
-    #[allow(dead_code)]
     pub walk_atlas_layout: Handle<TextureAtlasLayout>,
+    pub jump_sprites: Handle<Image>,
+    pub jump_atlas_layout: Handle<TextureAtlasLayout>,
     pub death_sprites: Handle<Image>,
     pub death_atlas_layout: Handle<TextureAtlasLayout>,
 }
@@ -38,6 +38,7 @@ pub struct PlayerBundle {
     worldly: Worldly,
     climber: Climber,
     ground_detection: GroundDetection,
+    jumping: Jumping,
     in_water: InWater,
     // Build Items Component manually by using `impl From<&EntityInstance>`
     #[from_entity_instance]
@@ -73,6 +74,7 @@ impl Default for PlayerBundle {
             worldly: Worldly::default(),
             climber: Climber::default(),
             ground_detection: GroundDetection::default(),
+            jumping: Jumping(false),
             in_water: InWater(false),
             items: Items::default(),
             entity_instance: EntityInstance::default(),

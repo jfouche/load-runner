@@ -18,7 +18,7 @@ pub fn character_plugin(app: &mut App) {
         )
         .add_systems(
             Update,
-            (update_on_ground, update_in_water).in_set(InGameSet::EntityUpdate),
+            (update_on_ground, update_in_water, update_jumping).in_set(InGameSet::EntityUpdate),
         );
 }
 
@@ -153,5 +153,15 @@ fn update_in_water(
                     false
                 });
             });
+    }
+}
+
+fn update_jumping(
+    mut characters: Query<(&mut Jumping, &GroundDetection), Changed<GroundDetection>>,
+) {
+    for (mut jumping, ground_detection) in &mut characters {
+        if ground_detection.on_ground {
+            jumping.0 = false;
+        }
     }
 }

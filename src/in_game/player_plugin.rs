@@ -15,7 +15,12 @@ pub fn player_plugin(app: &mut App) {
         .add_systems(Update, movement.in_set(InGameSet::UserInput))
         .add_systems(
             Update,
-            (animate_player, player_dying, animate_death).in_set(InGameSet::EntityUpdate),
+            (
+                (animate_walk, animate_jump).after(tick_and_update_sprite),
+                player_dying,
+                animate_death,
+            )
+                .in_set(InGameSet::EntityUpdate),
         )
         .add_systems(
             Update,
@@ -39,6 +44,17 @@ fn load_assets(
     );
     let walk_atlas_layout = texture_atlas_layouts.add(walk_layout);
 
+    // JUMP
+    let jump_sprites = asset_server.load("player/jump.png");
+    let jump_layout = TextureAtlasLayout::from_grid(
+        UVec2::splat(16),
+        6,
+        4,
+        Some(UVec2::splat(64)),
+        Some(UVec2::splat(32)),
+    );
+    let jump_atlas_layout = texture_atlas_layouts.add(jump_layout);
+
     // DEATH
     let death_sprites = asset_server.load("player/death.png");
     let death_layout = TextureAtlasLayout::from_grid(
@@ -54,6 +70,8 @@ fn load_assets(
     let assets = PlayerAssets {
         walk_sprites,
         walk_atlas_layout,
+        jump_sprites,
+        jump_atlas_layout,
         death_sprites,
         death_atlas_layout,
     };
@@ -90,18 +108,56 @@ fn spawn_ground_sensor(
     }
 }
 
-fn next_sprite_index(indices: &[usize], current: usize) -> usize {
-    let idx = match indices.iter().position(|&v| v == current) {
-        Some(idx) => (idx + 1) % indices.len(),
-        None => 0,
-    };
+fn next_sprite_index_option(indices: &[usize], current: usize) -> Option<usize> {
+    let i = indices.iter().position(|&v| v == current)?;
+    Some((i + 1) % indices.len())
+}
+
+fn next_sprite_index_repeat(indices: &[usize], current: usize) -> usize {
+    let idx = next_sprite_index_option(indices, current).unwrap_or(0);
     indices[idx]
 }
 
-fn animate_player(
-    time: Res<Time>,
+fn next_sprite_index_once(indices: &[usize], current: usize) -> usize {
+    next_sprite_index_option(indices, current)
+        .map(|i| indices[i])
+        .unwrap_or(current)
+}
+
+fn tick_and_update_sprite(
     mut players: Query<
-        (&Velocity, &Climber, &mut AnimationTimer, &mut TextureAtlas),
+        (
+            &Jumping,
+            &mut Handle<Image>,
+            &mut AnimationTimer,
+            &mut TextureAtlas,
+        ),
+        (With<Player>, Without<Dying>),
+    >,
+    assets: Res<PlayerAssets>,
+    time: Res<Time>,
+) {
+    if let Ok((&jumping, mut image, mut timer, mut atlas)) = players.get_single_mut() {
+        timer.tick(time.delta());
+        if *jumping {
+            *image = assets.jump_sprites.clone();
+            atlas.layout = assets.jump_atlas_layout.clone();
+        } else {
+            *image = assets.walk_sprites.clone();
+            atlas.layout = assets.walk_atlas_layout.clone();
+        }
+    }
+}
+
+fn animate_walk(
+    mut players: Query<
+        (
+            &Velocity,
+            &Climber,
+            &Jumping,
+            &AnimationTimer,
+            &mut TextureAtlas,
+        ),
         (With<Player>, Without<Dying>),
     >,
 ) {
@@ -110,18 +166,17 @@ fn animate_player(
     const CLIMB_INDICES: [usize; 8] = [24, 25, 26, 27, 28, 29, 30, 31];
     const FIXED_INDICE: usize = 16;
 
-    if let Ok((velocity, climber, mut timer, mut atlas)) = players.get_single_mut() {
-        timer.tick(time.delta());
-        if timer.just_finished() {
+    if let Ok((velocity, climber, &jumping, timer, mut atlas)) = players.get_single_mut() {
+        if !*jumping && timer.just_finished() {
             if velocity.move_right() {
-                atlas.index = next_sprite_index(&MOVE_RIGHT_INDICES, atlas.index)
+                atlas.index = next_sprite_index_repeat(&MOVE_RIGHT_INDICES, atlas.index)
             } else if velocity.move_left() {
-                atlas.index = next_sprite_index(&MOVE_LEFT_INDICES, atlas.index);
+                atlas.index = next_sprite_index_repeat(&MOVE_LEFT_INDICES, atlas.index);
             } else if climber.climbing {
                 // Climbing
                 let idx = if velocity.climb() {
                     // Moving
-                    next_sprite_index(&CLIMB_INDICES, atlas.index)
+                    next_sprite_index_repeat(&CLIMB_INDICES, atlas.index)
                 } else {
                     // Doesn't move during climbing
                     CLIMB_INDICES[0]
@@ -130,6 +185,30 @@ fn animate_player(
             } else {
                 // Doesn't move
                 atlas.index = FIXED_INDICE;
+            }
+        }
+    }
+}
+
+fn animate_jump(
+    mut players: Query<
+        (&Velocity, &Jumping, &AnimationTimer, &mut TextureAtlas),
+        (With<Player>, Without<Dying>),
+    >,
+) {
+    const JUMP_RIGHT_INDICES: [usize; 6] = [0, 1, 2, 3, 4, 5];
+    const JUMP_LEFT_INDICES: [usize; 6] = [6, 7, 8, 9, 10, 11];
+    const JUMP_FRONT_INDICES: [usize; 6] = [12, 13, 14, 15, 16, 17];
+
+    if let Ok((velocity, &jumping, timer, mut atlas)) = players.get_single_mut() {
+        if *jumping && timer.just_finished() {
+            if velocity.move_right() {
+                atlas.index = next_sprite_index_once(&JUMP_RIGHT_INDICES, atlas.index)
+            } else if velocity.move_left() {
+                atlas.index = next_sprite_index_once(&JUMP_LEFT_INDICES, atlas.index);
+            } else {
+                // Doesn't move
+                atlas.index = next_sprite_index_once(&JUMP_FRONT_INDICES, atlas.index);
             }
         }
     }
@@ -180,6 +259,7 @@ fn movement(
         (
             &mut Velocity,
             &mut Climber,
+            &mut Jumping,
             &GroundDetection,
             &Speed,
             &JumpSpeed,
@@ -194,8 +274,16 @@ fn movement(
     // const SMALL_JUMP_SPEED: f32 = 160.;
     // const BIG_JUMP_SPEED: f32 = 280.;
 
-    for (mut velocity, mut climber, ground_detection, &speed, &jump_speed, items, &in_water) in
-        &mut query
+    for (
+        mut velocity,
+        mut climber,
+        mut jumping,
+        ground_detection,
+        &speed,
+        &jump_speed,
+        items,
+        &in_water,
+    ) in &mut query
     {
         let right = if input.pressed(KeyCode::KeyD) { 1. } else { 0. };
         let left = if input.pressed(KeyCode::KeyA) { 1. } else { 0. };
@@ -225,6 +313,7 @@ fn movement(
         if input.just_pressed(KeyCode::Space)
             && (ground_detection.on_ground || climber.climbing || *in_water)
         {
+            jumping.0 = true;
             velocity.linvel.y = *jump_speed;
             if items.contains(Item::Boots) {
                 velocity.linvel.y *= BOOTS_JUMP_BONUS;
