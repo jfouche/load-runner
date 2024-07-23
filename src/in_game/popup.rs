@@ -3,10 +3,8 @@ use crate::ui::*;
 use bevy::prelude::*;
 
 pub fn popup_plugin(app: &mut App) {
-    app.add_systems(
-        Update,
-        (spawn_popup, close_popup).run_if(in_state(GameState::InGame)),
-    );
+    app.add_systems(Update, close_popup.run_if(in_state(GameState::InGame)))
+        .observe(spawn_popup);
 }
 
 #[derive(Component, Default)]
@@ -74,11 +72,13 @@ impl PopupBundle {
 }
 
 fn spawn_popup(
+    trigger: Trigger<OnAdd, PopupContent>,
     mut commands: Commands,
-    popups: Query<(Entity, &PopupContent, &PopupCloseEvent), Added<PopupContent>>,
+    query: Query<&PopupContent>,
     mut in_game_state: ResMut<NextState<InGameState>>,
 ) {
-    for (entity, content, _close_event) in &popups {
+    let entity = trigger.entity();
+    if let Ok(content) = query.get(entity) {
         commands.entity(entity).with_children(|menu| {
             menu.spawn(popup_title_bar()).with_children(|title_bar| {
                 title_bar.spawn(popup_title(&content.title));
@@ -92,9 +92,6 @@ fn spawn_popup(
                 });
             }
         });
-        // if let PopupCloseEvent::Duration(duration) = close_event {
-        //     commands.entity(entity).insert(Temporary::new(*duration));
-        // }
         in_game_state.set(InGameState::ShowPopup);
     }
 }
