@@ -1,30 +1,35 @@
-use super::{GameState, InGameState, Temporary};
+use super::Temporary;
 use crate::ui::*;
 use bevy::prelude::*;
 
 pub fn popup_plugin(app: &mut App) {
-    app.add_systems(Update, close_popup.run_if(in_state(GameState::InGame)))
-        .observe(spawn_popup);
+    app.add_systems(Update, (spawn_popup, close_popup));
 }
 
 #[derive(Component, Default)]
-pub struct PopupContent {
+pub struct Popup;
+
+#[derive(Component, Default)]
+struct PopupContent {
     pub title: String,
     pub text: String,
     pub images: Vec<PopupImage>,
 }
 
-impl PopupContent {
-    pub fn add_image(&mut self, image: PopupImage) {
-        self.images.push(image);
-    }
-}
-
 pub enum PopupImage {
     AtlasImage {
-        texture_atlas: TextureAtlas,
         image: UiImage,
+        texture_atlas: TextureAtlas,
     },
+}
+
+impl From<(UiImage, TextureAtlas)> for PopupImage {
+    fn from(bundle: (UiImage, TextureAtlas)) -> Self {
+        PopupImage::AtlasImage {
+            image: bundle.0,
+            texture_atlas: bundle.1,
+        }
+    }
 }
 
 #[derive(Component, Default)]
@@ -36,7 +41,8 @@ enum PopupCloseEvent {
 
 #[derive(Bundle)]
 pub struct PopupBundle {
-    pub content: PopupContent,
+    tag: Popup,
+    content: PopupContent,
     name: Name,
     node: NodeBundle,
     close_event: PopupCloseEvent,
@@ -45,6 +51,7 @@ pub struct PopupBundle {
 impl Default for PopupBundle {
     fn default() -> Self {
         PopupBundle {
+            tag: Popup,
             content: PopupContent::default(),
             name: Name::new("Popup"),
             node: popup(),
@@ -54,11 +61,19 @@ impl Default for PopupBundle {
 }
 
 impl PopupBundle {
-    pub fn new(content: PopupContent) -> Self {
+    pub fn new(title: impl Into<String>, text: impl Into<String>) -> Self {
         PopupBundle {
-            content,
+            content: PopupContent {
+                title: title.into(),
+                text: text.into(),
+                ..Default::default()
+            },
             ..Default::default()
         }
+    }
+
+    pub fn add_image(&mut self, image: impl Into<PopupImage>) {
+        self.content.images.push(image.into());
     }
 
     // pub fn auto_despawn(self) -> Self {
@@ -72,13 +87,10 @@ impl PopupBundle {
 }
 
 fn spawn_popup(
-    trigger: Trigger<OnAdd, PopupContent>,
     mut commands: Commands,
-    query: Query<&PopupContent>,
-    mut in_game_state: ResMut<NextState<InGameState>>,
+    popups: Query<(Entity, &PopupContent, &PopupCloseEvent), Added<Popup>>,
 ) {
-    let entity = trigger.entity();
-    if let Ok(content) = query.get(entity) {
+    for (entity, content, _close_event) in &popups {
         commands.entity(entity).with_children(|menu| {
             menu.spawn(popup_title_bar()).with_children(|title_bar| {
                 title_bar.spawn(popup_title(&content.title));
@@ -92,7 +104,6 @@ fn spawn_popup(
                 });
             }
         });
-        in_game_state.set(InGameState::ShowPopup);
     }
 }
 
@@ -100,12 +111,11 @@ fn close_popup(
     mut commands: Commands,
     popups: Query<Entity, (With<PopupCloseEvent>, Without<Temporary>)>,
     input: Res<ButtonInput<KeyCode>>,
-    mut in_game_state: ResMut<NextState<InGameState>>,
 ) {
     if input.get_just_pressed().len() != 0 {
         for entity in &popups {
+            warn!("close_popup({entity})");
             commands.entity(entity).despawn_recursive();
-            in_game_state.set(InGameState::Running);
         }
     }
 }

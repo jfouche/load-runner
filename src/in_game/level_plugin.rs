@@ -216,19 +216,12 @@ fn open_door(
                 commands.entity(door_entity).despawn_recursive();
             } else {
                 // Show a popup that shows the expected items to open the door
-                let mut popup_content = PopupContent {
-                    title: "Closed door".into(),
-                    text: "You should have the following items".into(),
-                    ..Default::default()
-                };
+                let mut popup_bundle =
+                    PopupBundle::new("Closed door", "You should have the following items");
                 for &item in expected_items.iter() {
-                    let bundle = assets.image_bundle(item);
-                    popup_content.add_image(PopupImage::AtlasImage {
-                        texture_atlas: bundle.0,
-                        image: bundle.1,
-                    });
+                    popup_bundle.add_image(assets.image_components(item));
                 }
-                commands.spawn(PopupBundle::new(popup_content));
+                commands.spawn(popup_bundle);
             }
         });
 }

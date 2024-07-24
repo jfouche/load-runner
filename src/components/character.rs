@@ -34,7 +34,6 @@ impl From<&EntityInstance> for Life {
         let life = entity_instance
             .get_int_field("life")
             .expect("[life] field should be correctly typed");
-
         Life {
             current: *life as u16,
         }
@@ -71,10 +70,6 @@ impl From<&EntityInstance> for Speed {
         let speed = entity_instance
             .get_float_field("speed")
             .expect("[speed] field should be correctly typed");
-        warn!(
-            "From<&EntityInstance> for Speed : {} = {speed:?}",
-            entity_instance.identifier
-        );
         Speed(*speed)
     }
 }
@@ -87,10 +82,6 @@ impl From<&EntityInstance> for JumpSpeed {
         let speed = entity_instance
             .get_float_field("jump_speed")
             .expect("[jump_speed] field should be correctly typed");
-        warn!(
-            "From<&EntityInstance> for JumpSpeed : {} = {speed:?}",
-            entity_instance.identifier
-        );
         JumpSpeed(*speed)
     }
 }

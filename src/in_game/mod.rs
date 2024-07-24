@@ -1,6 +1,7 @@
 use crate::{components::*, cursor::*, schedule::InGameSet, utils::*};
 use bevy::{app::PluginGroupBuilder, prelude::*};
 use bevy_rapier2d::prelude::*;
+use popup::Popup;
 
 mod character_plugin;
 mod collisions;
@@ -38,7 +39,7 @@ impl PluginGroup for InGamePlugins {
 
 fn in_game_plugin(app: &mut App) {
     app.add_systems(Startup, stop_physics)
-        .add_systems(OnEnter(GameState::InGame), (set_background, grab_cursor))
+        .add_systems(OnEnter(GameState::InGame), grab_cursor)
         .add_systems(OnExit(GameState::InGame), (ungrab_cursor, reset_physics))
         .add_systems(OnEnter(InGameState::Running), (grab_cursor, start_physics))
         .add_systems(OnExit(InGameState::Running), (ungrab_cursor, stop_physics))
@@ -46,11 +47,14 @@ fn in_game_plugin(app: &mut App) {
         .add_systems(OnExit(InGameState::Pause), unpause)
         .add_systems(OnEnter(InGameState::ShowPopup), pause)
         .add_systems(OnExit(InGameState::ShowPopup), unpause)
-        .add_systems(Update, switch_to_pause.in_set(InGameSet::UserInput));
-}
-
-fn set_background(mut commands: Commands) {
-    commands.insert_resource(ClearColor(Color::BLACK));
+        .add_systems(Update, switch_to_pause.in_set(InGameSet::UserInput))
+        .add_systems(
+            Update,
+            (
+                enter_popup_state.in_set(InGameSet::EntityUpdate),
+                exit_popup_state.run_if(in_state(InGameState::ShowPopup)),
+            ),
+        );
 }
 
 fn switch_to_pause(mut state: ResMut<NextState<InGameState>>, keys: Res<ButtonInput<KeyCode>>) {
@@ -90,4 +94,25 @@ fn stop_physics(mut physics: ResMut<RapierConfiguration>) {
 fn reset_physics(mut commands: Commands) {
     commands.insert_resource(Events::<CollisionEvent>::default());
     commands.insert_resource(Events::<ContactForceEvent>::default());
+}
+
+fn enter_popup_state(
+    query: Query<(), Added<Popup>>,
+    mut in_game_state: ResMut<NextState<InGameState>>,
+) {
+    if query.get_single().is_ok() {
+        warn!("enter_popup_state");
+        in_game_state.set(InGameState::ShowPopup);
+    }
+}
+
+fn exit_popup_state(
+    query: RemovedComponents<Popup>,
+    mut in_game_state: ResMut<NextState<InGameState>>,
+) {
+    warn!("exit_popup_state");
+    if !query.is_empty() {
+        warn!("exit_popup_state OK");
+        in_game_state.set(InGameState::Running);
+    }
 }

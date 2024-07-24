@@ -48,18 +48,10 @@ fn open_chest(
             commands.entity(chest_entity).despawn_recursive();
 
             // Show a popup with chest items
-            let mut popup_content = PopupContent {
-                title: "Chest opened".into(),
-                text: "You found".into(),
-                ..Default::default()
-            };
+            let mut popup_bundle = PopupBundle::new("Chest opened", "You found");
             for &item in chest_items.iter() {
-                let bundle = assets.image_bundle(item);
-                popup_content.add_image(PopupImage::AtlasImage {
-                    texture_atlas: bundle.0,
-                    image: bundle.1,
-                });
+                popup_bundle.add_image(assets.image_components(item));
             }
-            commands.spawn(PopupBundle::new(popup_content));
+            commands.spawn(popup_bundle);
         });
 }

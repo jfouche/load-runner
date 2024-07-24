@@ -114,7 +114,7 @@ pub struct ItemAssets {
 }
 
 impl ItemAssets {
-    pub fn image_bundle(&self, item: Item) -> (TextureAtlas, UiImage) {
+    pub fn image_components(&self, item: Item) -> (UiImage, TextureAtlas) {
         let index = match item {
             Item::Boots => 18,
             Item::Key => 83,
@@ -122,11 +122,22 @@ impl ItemAssets {
             Item::Unknown => 0,
         };
         (
+            UiImage::new(self.texture.clone()),
             TextureAtlas {
                 layout: self.texture_atlas_layout.clone(),
                 index,
             },
-            UiImage::new(self.texture.clone()),
+        )
+    }
+
+    pub fn image_bundle(&self, item: Item) -> (ImageBundle, TextureAtlas) {
+        let components = self.image_components(item);
+        (
+            ImageBundle {
+                image: components.0,
+                ..Default::default()
+            },
+            components.1,
         )
     }
 }
