@@ -114,7 +114,6 @@ fn close_popup(
 ) {
     if input.get_just_pressed().len() != 0 {
         for entity in &popups {
-            warn!("close_popup({entity})");
             commands.entity(entity).despawn_recursive();
         }
     }

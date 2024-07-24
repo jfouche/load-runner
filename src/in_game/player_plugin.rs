@@ -311,6 +311,7 @@ fn movement(
 
         // Jump
         if input.just_pressed(KeyCode::Space)
+            && !jumping.0
             && (ground_detection.on_ground || climber.climbing || *in_water)
         {
             jumping.0 = true;

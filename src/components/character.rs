@@ -89,7 +89,7 @@ impl From<&EntityInstance> for JumpSpeed {
 #[derive(Clone, Copy, Component)]
 pub struct Damage(pub u16);
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct GroundSensor {
     pub ground_detection_entity: Entity,
     pub intersecting_ground_entities: HashSet<Entity>,

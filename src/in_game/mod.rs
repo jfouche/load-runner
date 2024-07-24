@@ -101,7 +101,6 @@ fn enter_popup_state(
     mut in_game_state: ResMut<NextState<InGameState>>,
 ) {
     if query.get_single().is_ok() {
-        warn!("enter_popup_state");
         in_game_state.set(InGameState::ShowPopup);
     }
 }
@@ -110,9 +109,7 @@ fn exit_popup_state(
     query: RemovedComponents<Popup>,
     mut in_game_state: ResMut<NextState<InGameState>>,
 ) {
-    warn!("exit_popup_state");
     if !query.is_empty() {
-        warn!("exit_popup_state OK");
         in_game_state.set(InGameState::Running);
     }
 }
