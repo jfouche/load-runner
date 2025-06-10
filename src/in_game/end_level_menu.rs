@@ -1,6 +1,6 @@
-use super::InGameState;
 use crate::{
-    components::{despawn_all, GameState},
+    components::despawn_all,
+    schedule::{GameState, InGameState},
     theme::widget,
     ui::*,
 };

@@ -1,4 +1,3 @@
-use crate::components::*;
 use bevy::prelude::*;
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, SystemSet)]
@@ -13,6 +12,28 @@ pub enum InGameSet {
     EntityUpdate,
     CollisionDetection,
     DespawnEntities,
+}
+
+/// Represent the Game state
+#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
+pub enum GameState {
+    #[default]
+    Splash,
+    Menu,
+    InGame,
+}
+
+/// Represent the state while in game
+#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
+pub enum InGameState {
+    #[default]
+    Disabled,
+    Running,
+    Pause,
+    PlayerEndedLevel,
+    PlayerDied,
+    ShowPopup,
+    LoadLevel,
 }
 
 pub fn schedule_plugin(app: &mut App) {

@@ -1,8 +1,9 @@
-use super::*;
 use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 use std::slice::Iter;
+
+use crate::components::level::ColliderBundle;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Reflect)]
 pub enum Item {
@@ -110,6 +111,21 @@ impl Default for ChestBundle {
 pub struct ItemAssets {
     pub texture: Handle<Image>,
     pub texture_atlas_layout: Handle<TextureAtlasLayout>,
+}
+
+impl FromWorld for ItemAssets {
+    fn from_world(world: &mut World) -> Self {
+        ItemAssets {
+            texture: world.load_asset("atlas/MV Icons Complete Sheet Free - ALL.png"),
+            texture_atlas_layout: world.add_asset(TextureAtlasLayout::from_grid(
+                UVec2::new(32, 32),
+                16,
+                95,
+                None,
+                None,
+            )),
+        }
+    }
 }
 
 impl ItemAssets {

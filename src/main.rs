@@ -4,6 +4,10 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
+use crate::utils::{
+    blink::BlinkPlugin, despawn_after::despawn_after_plugin, invulnerable::InvulnerabilityPlugin,
+};
+
 mod asset_tracking;
 mod camera;
 mod components;
@@ -36,8 +40,10 @@ fn main() {
         ))
         .add_plugins(debug::plugin)
         .add_plugins((
+            BlinkPlugin,
+            InvulnerabilityPlugin,
+            despawn_after_plugin,
             schedule::schedule_plugin,
-            utils::UtilsPlugins,
             ui::UiPlugins,
             camera::camera_plugin,
             splash::splash_plugin,

@@ -1,4 +1,10 @@
-use crate::{components::*, schedule::InGameSet};
+use crate::{
+    components::{
+        character::{Climber, GroundDetection, GroundSensor, InWater, Jumping, Life, Speed},
+        level::{Climbable, Wall, Water, COLLISIONS_LAYER},
+    },
+    schedule::InGameSet,
+};
 use bevy::prelude::*;
 use bevy_ecs_ldtk::{prelude::*, utils::translation_to_grid_coords};
 use bevy_rapier2d::prelude::*;

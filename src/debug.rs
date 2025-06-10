@@ -1,7 +1,11 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
-use crate::{components::*, cursor::*, schedule::InGameSet};
+use crate::{
+    components::{item::Items, level::COLLISIONS_LAYER, player::Player},
+    cursor::*,
+    schedule::*,
+};
 use bevy::{prelude::*, time::common_conditions::on_timer, window::PrimaryWindow};
 use bevy_ecs_ldtk::{
     prelude::*,

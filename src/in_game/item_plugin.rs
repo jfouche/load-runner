@@ -1,27 +1,19 @@
-use super::collisions::*;
-use crate::{components::*, in_game::popup::*, schedule::InGameSet};
+use crate::{
+    components::{
+        item::{Chest, ItemAssets, Items},
+        player::Player,
+    },
+    in_game::popup::*,
+    schedule::InGameSet,
+    utils::collisions::{start_event_filter, QueryEither},
+};
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 pub fn item_plugin(app: &mut App) {
     app.register_type::<Items>()
-        .add_systems(Startup, load_assets)
+        .init_resource::<ItemAssets>()
         .add_systems(Update, open_chest.in_set(InGameSet::CollisionDetection));
-}
-
-fn load_assets(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-) {
-    let texture = asset_server.load("atlas/MV Icons Complete Sheet Free - ALL.png");
-    let layout = TextureAtlasLayout::from_grid(UVec2::new(32, 32), 16, 95, None, None);
-    let texture_atlas_layout = texture_atlas_layouts.add(layout);
-    let assets = ItemAssets {
-        texture,
-        texture_atlas_layout,
-    };
-    commands.insert_resource(assets);
 }
 
 fn open_chest(
@@ -48,10 +40,10 @@ fn open_chest(
             commands.entity(chest_entity).despawn();
 
             // Show a popup with chest items
-            let mut popup_bundle = PopupBundle::new("Chest opened", "You found");
-            for &item in chest_items.iter() {
-                popup_bundle.add_image(assets.image_node(item));
-            }
-            commands.spawn(popup_bundle);
+            let images = chest_items
+                .iter()
+                .map(|&i| assets.image_node(i))
+                .collect::<Vec<_>>();
+            commands.spawn(popup_with_images("Chest opened", "You found", images));
         });
 }

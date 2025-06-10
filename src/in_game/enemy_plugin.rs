@@ -1,4 +1,7 @@
-use crate::{components::*, schedule::InGameSet};
+use crate::{
+    components::{character::Speed, enemy::Patrol},
+    schedule::InGameSet,
+};
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 

@@ -1,7 +1,21 @@
-use super::GROUP_ENEMY;
-use crate::in_game::collisions::*;
-use crate::utils::*;
-use crate::{components::*, schedule::InGameSet};
+use crate::{
+    components::{
+        character::{
+            AnimationTimer, Climber, Damage, Dying, GroundDetection, GroundSensor,
+            GroundSensorCollider, InWater, JumpSpeed, Jumping, Life, Movement, Speed,
+        },
+        enemy::Enemy,
+        item::{Item, Items},
+        level::ColliderBundle,
+        player::{Player, PlayerAssets, PlayerDeathEvent},
+        GROUP_ENEMY,
+    },
+    schedule::InGameSet,
+    utils::{
+        collisions::{start_event_filter, QueryEither},
+        invulnerable::Invulnerable,
+    },
+};
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 use std::time::Duration;
@@ -168,13 +182,13 @@ fn animate_walk(
                 .texture_atlas
                 .as_mut()
                 .expect("A player should have a TextureAtlas");
-            if velocity.move_right() {
+            if velocity.is_moving_right() {
                 atlas.index = next_sprite_index_repeat(&MOVE_RIGHT_INDICES, atlas.index)
-            } else if velocity.move_left() {
+            } else if velocity.is_moving_left() {
                 atlas.index = next_sprite_index_repeat(&MOVE_LEFT_INDICES, atlas.index);
             } else if climber.climbing {
                 // Climbing
-                let idx = if velocity.climb() {
+                let idx = if velocity.is_climbing() {
                     // Moving
                     next_sprite_index_repeat(&CLIMB_INDICES, atlas.index)
                 } else {
@@ -206,9 +220,9 @@ fn animate_jump(
                 .texture_atlas
                 .as_mut()
                 .expect("A player should have a TextureAtlas");
-            if velocity.move_right() {
+            if velocity.is_moving_right() {
                 atlas.index = next_sprite_index_once(&JUMP_RIGHT_INDICES, atlas.index)
-            } else if velocity.move_left() {
+            } else if velocity.is_moving_left() {
                 atlas.index = next_sprite_index_once(&JUMP_LEFT_INDICES, atlas.index);
             } else {
                 // Doesn't move

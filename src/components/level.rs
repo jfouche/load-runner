@@ -1,8 +1,9 @@
-use super::Items;
 use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 use std::collections::{HashMap, HashSet};
+
+use crate::components::item::Items;
 
 pub const _ENTITIES_LAYER: usize = 0;
 pub const _WALL_SHADOWS_LAYER: usize = 1;

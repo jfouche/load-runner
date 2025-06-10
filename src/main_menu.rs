@@ -1,7 +1,4 @@
-use crate::{
-    components::{despawn_all, GameState},
-    theme::widget,
-};
+use crate::{components::despawn_all, schedule::GameState, theme::widget};
 use bevy::{app::AppExit, color::palettes::css::GRAY, prelude::*};
 
 pub fn main_menu_plugin(app: &mut App) {

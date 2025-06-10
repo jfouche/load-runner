@@ -1,7 +1,7 @@
 use crate::{
-    components::{despawn_all, GameState, InGameState, PlayerDeathEvent},
+    components::{despawn_all, player::PlayerDeathEvent},
     cursor::ungrab_cursor,
-    schedule::InGameSet,
+    schedule::{GameState, InGameSet, InGameState},
     theme::widget,
 };
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};

@@ -1,4 +1,7 @@
-use crate::{components::*, schedule::InGameSet};
+use crate::{
+    components::player::Player,
+    schedule::{InGameSet, InGameState},
+};
 use bevy::prelude::*;
 
 pub fn camera_plugin(app: &mut App) {

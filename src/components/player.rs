@@ -1,5 +1,11 @@
-use super::*;
-use crate::in_game::GROUP_PLAYER;
+use crate::components::{
+    character::{
+        AnimationTimer, Climber, GroundDetection, InWater, JumpSpeed, Jumping, Life, Speed,
+    },
+    item::Items,
+    level::ColliderBundle,
+    GROUP_PLAYER,
+};
 use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;

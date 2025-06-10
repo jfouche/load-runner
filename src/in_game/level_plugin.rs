@@ -1,5 +1,19 @@
-use super::{collisions::*, popup::*};
-use crate::{components::*, schedule::InGameSet, ui::*};
+use crate::{
+    components::{
+        enemy::MobBundle,
+        item::{ChestBundle, ItemAssets, Items},
+        level::{
+            Door, DoorBundle, EndLevel, EndLevelBundle, LadderBundle, LevelColliders, Wall,
+            WallBundle, WaterBundle, COLLISIONS_LAYER, DIRT_INT_CELL, LADDER_INT_CELL,
+            STONE_INT_CELL, WATER_INT_CELL,
+        },
+        player::{Player, PlayerBundle},
+    },
+    in_game::popup::popup_with_images,
+    schedule::{GameState, InGameSet, InGameState},
+    ui::{fader, FaderFinishEvent},
+    utils::collisions::{start_event_filter, QueryEither},
+};
 use bevy::{ecs::query::QuerySingleError, prelude::*};
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -159,36 +173,36 @@ fn update_level_selection(
     mut level_selection: ResMut<LevelSelection>,
     ldtk_projects: Query<&LdtkProjectHandle>,
     ldtk_project_assets: Res<Assets<LdtkProject>>,
-) -> Result {
-    let ldtk_project = ldtk_projects.single()?;
-    let ldtk_project = ldtk_project_assets
-        .get(ldtk_project)
-        .ok_or("Project should be loaded if level has spawned".into())?;
+) {
+    if let Ok(ldtk_project) = ldtk_projects.single() {
+        let ldtk_project = ldtk_project_assets
+            .get(ldtk_project)
+            .expect("Project should be loaded if level has spawned");
 
-    for (level_iid, level_transform) in &level_query {
-        let level = ldtk_project
-            .get_raw_level_by_iid(&level_iid.to_string())
-            .expect("Spawned level should exist in LDtk project");
-        let level_bounds = Rect {
-            min: Vec2::new(level_transform.translation.x, level_transform.translation.y),
-            max: Vec2::new(
-                level_transform.translation.x + level.px_wid as f32,
-                level_transform.translation.y + level.px_hei as f32,
-            ),
-        };
+        for (level_iid, level_transform) in &level_query {
+            let level = ldtk_project
+                .get_raw_level_by_iid(&level_iid.to_string())
+                .expect("Spawned level should exist in LDtk project");
+            let level_bounds = Rect {
+                min: Vec2::new(level_transform.translation.x, level_transform.translation.y),
+                max: Vec2::new(
+                    level_transform.translation.x + level.px_wid as f32,
+                    level_transform.translation.y + level.px_hei as f32,
+                ),
+            };
 
-        for player_transform in &player_query {
-            if player_transform.translation.x < level_bounds.max.x
-                && player_transform.translation.x > level_bounds.min.x
-                && player_transform.translation.y < level_bounds.max.y
-                && player_transform.translation.y > level_bounds.min.y
-                && !level_selection.is_match(&LevelIndices::default(), level)
-            {
-                *level_selection = LevelSelection::iid(level.iid.clone());
+            for player_transform in &player_query {
+                if player_transform.translation.x < level_bounds.max.x
+                    && player_transform.translation.x > level_bounds.min.x
+                    && player_transform.translation.y < level_bounds.max.y
+                    && player_transform.translation.y > level_bounds.min.y
+                    && !level_selection.is_match(&LevelIndices::default(), level)
+                {
+                    *level_selection = LevelSelection::iid(level.iid.clone());
+                }
             }
         }
     }
-    Ok(())
 }
 
 fn restart_level(
@@ -223,12 +237,15 @@ fn open_door(
                 commands.entity(door_entity).despawn();
             } else {
                 // Show a popup that shows the expected items to open the door
-                let mut popup_bundle =
-                    PopupBundle::new("Closed door", "You should have the following items");
-                for &item in expected_items.iter() {
-                    popup_bundle.add_image(assets.image_node(item));
-                }
-                commands.spawn(popup_bundle);
+                let images = expected_items
+                    .iter()
+                    .map(|&i| assets.image_node(i))
+                    .collect::<Vec<_>>();
+                commands.spawn(popup_with_images(
+                    "Closed door",
+                    "You should have the following items",
+                    images,
+                ));
             }
         });
 }

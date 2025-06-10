@@ -4,21 +4,21 @@ use bevy_rapier2d::prelude::*;
 use std::collections::HashSet;
 
 pub trait Movement {
-    fn move_left(&self) -> bool;
-    fn move_right(&self) -> bool;
-    fn climb(&self) -> bool;
+    fn is_moving_left(&self) -> bool;
+    fn is_moving_right(&self) -> bool;
+    fn is_climbing(&self) -> bool;
 }
 
 impl Movement for Velocity {
-    fn move_left(&self) -> bool {
+    fn is_moving_left(&self) -> bool {
         self.linvel.x < -f32::EPSILON
     }
 
-    fn move_right(&self) -> bool {
+    fn is_moving_right(&self) -> bool {
         self.linvel.x > f32::EPSILON
     }
 
-    fn climb(&self) -> bool {
+    fn is_climbing(&self) -> bool {
         self.linvel.y > f32::EPSILON || self.linvel.y < -f32::EPSILON
     }
 }

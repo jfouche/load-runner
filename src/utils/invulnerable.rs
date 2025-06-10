@@ -1,4 +1,4 @@
-use crate::utils::Blink;
+use super::blink::Blink;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::{CollisionGroups, Group};
 use std::time::Duration;

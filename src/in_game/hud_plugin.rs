@@ -1,7 +1,14 @@
-use crate::components::*;
-use crate::schedule::InGameSet;
-use crate::theme::widget;
-use crate::ui::*;
+use crate::{
+    components::{
+        character::Life,
+        despawn_all,
+        item::{ItemAssets, Items},
+        player::Player,
+    },
+    schedule::{GameState, InGameSet},
+    theme::widget,
+    ui::ProgressBar,
+};
 use bevy::prelude::*;
 
 pub fn hud_plugin(app: &mut App) {
