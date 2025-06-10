@@ -20,6 +20,37 @@ pub struct PlayerAssets {
     pub death_atlas_layout: Handle<TextureAtlasLayout>,
 }
 
+impl FromWorld for PlayerAssets {
+    fn from_world(world: &mut World) -> Self {
+        PlayerAssets {
+            walk_sprites: world.load_asset("player/walk.png"),
+            walk_atlas_layout: world.add_asset(TextureAtlasLayout::from_grid(
+                UVec2::splat(16),
+                8,
+                4,
+                Some(UVec2::splat(64)),
+                Some(UVec2::splat(32)),
+            )),
+            jump_sprites: world.load_asset("player/jump.png"),
+            jump_atlas_layout: world.add_asset(TextureAtlasLayout::from_grid(
+                UVec2::splat(16),
+                6,
+                4,
+                Some(UVec2::splat(64)),
+                Some(UVec2::splat(32)),
+            )),
+            death_sprites: world.load_asset("player/death.png"),
+            death_atlas_layout: world.add_asset(TextureAtlasLayout::from_grid(
+                UVec2::splat(16),
+                6,
+                4,
+                Some(UVec2::splat(64)),
+                Some(UVec2::splat(32)),
+            )),
+        }
+    }
+}
+
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
 pub struct Player;
 

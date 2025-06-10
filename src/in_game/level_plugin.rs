@@ -9,7 +9,7 @@ use crate::{
         },
         player::{Player, PlayerBundle},
     },
-    in_game::popup::popup_with_images,
+    in_game::popup_with_images::popup_with_images,
     schedule::{GameState, InGameSet, InGameState},
     ui::fade::{fader, FaderFinishEvent},
     utils::collisions::{start_event_filter, QueryEither},
@@ -43,10 +43,6 @@ pub fn level_plugin(app: &mut App) {
             Update,
             spawn_wall_collision.run_if(in_state(GameState::InGame)),
         )
-        .add_systems(
-            Update,
-            start_level_after_fading.run_if(in_state(InGameState::LoadLevel)),
-        )
         // InGame
         .add_systems(
             Update,
@@ -56,7 +52,8 @@ pub fn level_plugin(app: &mut App) {
             Update,
             (open_door, end_level).in_set(InGameSet::CollisionDetection),
         )
-        .add_systems(Update, restart_level.in_set(InGameSet::UserInput));
+        .add_systems(Update, restart_level.in_set(InGameSet::UserInput))
+        .add_observer(start_level_after_fading);
 }
 
 const END_LEVEL_FADE_COLOR: Color = Color::srgba(0.0, 0.0, 0.8, 1.0);
@@ -68,17 +65,15 @@ fn show_level(mut commands: Commands) {
 
 /// wait for fader to finish, and start running
 fn start_level_after_fading(
+    trigger: Trigger<FaderFinishEvent>,
     mut commands: Commands,
-    mut events: EventReader<FaderFinishEvent>,
     mut in_game_state: ResMut<NextState<InGameState>>,
 ) {
-    for event in events.read() {
-        if let Ok(mut fader) = commands.get_entity(event.entity) {
-            info!("start_level() - despawn({:?})", event.entity);
-            fader.despawn();
-        }
-        in_game_state.set(InGameState::Running);
+    if let Ok(mut fader) = commands.get_entity(trigger.target()) {
+        info!("start_level() - despawn({:?})", trigger.target());
+        fader.despawn();
     }
+    in_game_state.set(InGameState::Running);
 }
 
 fn spawn_level(
@@ -103,7 +98,7 @@ fn spawn_level(
     }
 }
 
-/// Spawns heron collisions for the walls of a level
+/// Spawns collisions for the walls of a level
 ///
 /// You could just insert a ColliderBundle in to the WallBundle,
 /// but this spawns a different collider for EVERY wall tile.

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 pub fn fader(from: Color, to: Color, duration_secs: f32) -> impl Bundle {
     (
-        Name::new("Fade"),
+        Name::new("Fader"),
         Fader { from, to },
         Node {
             width: Val::Percent(100.0),
@@ -16,9 +16,7 @@ pub fn fader(from: Color, to: Color, duration_secs: f32) -> impl Bundle {
 }
 
 #[derive(Event)]
-pub struct FaderFinishEvent {
-    pub entity: Entity,
-}
+pub struct FaderFinishEvent;
 
 #[derive(Component)]
 struct Fader {
@@ -41,12 +39,6 @@ impl Fader {
 #[derive(Component, Deref, DerefMut)]
 struct FadeTimer(Timer);
 
-impl FadeTimer {
-    fn percent(&self) -> f32 {
-        self.elapsed().as_secs_f32() / self.duration().as_secs_f32()
-    }
-}
-
 pub fn plugin(app: &mut App) {
     app.add_event::<FaderFinishEvent>()
         .add_systems(Update, fade);
@@ -54,16 +46,14 @@ pub fn plugin(app: &mut App) {
 
 fn fade(
     mut faders: Query<(Entity, &Fader, &mut FadeTimer, &mut BackgroundColor)>,
+    mut commands: Commands,
     time: Res<Time>,
-    mut events: EventWriter<FaderFinishEvent>,
 ) {
     for (entity, fader, mut timer, mut bgcolor) in &mut faders {
         timer.tick(time.delta());
-        let percent = timer.percent();
-        bgcolor.0 = fader.color(percent);
+        bgcolor.0 = fader.color(timer.fraction());
         if timer.just_finished() {
-            // TODO: trigger
-            events.write(FaderFinishEvent { entity });
+            commands.trigger_targets(FaderFinishEvent, entity);
         }
     }
 }

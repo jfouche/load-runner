@@ -6,7 +6,7 @@ use std::collections::HashSet;
 pub trait Movement {
     fn is_moving_left(&self) -> bool;
     fn is_moving_right(&self) -> bool;
-    fn is_climbing(&self) -> bool;
+    fn is_moving_vertical(&self) -> bool;
 }
 
 impl Movement for Velocity {
@@ -18,7 +18,7 @@ impl Movement for Velocity {
         self.linvel.x > f32::EPSILON
     }
 
-    fn is_climbing(&self) -> bool {
+    fn is_moving_vertical(&self) -> bool {
         self.linvel.y > f32::EPSILON || self.linvel.y < -f32::EPSILON
     }
 }

@@ -1,7 +1,7 @@
 use crate::{theme::widget, utils::despawn_after::DespawnAfter};
 use bevy::{ecs::spawn::SpawnWith, prelude::*};
 
-pub fn popup_plugin(app: &mut App) {
+pub fn popup_with_images_plugin(app: &mut App) {
     app.add_systems(Update, close_popup);
 }
 

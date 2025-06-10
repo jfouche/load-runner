@@ -3,7 +3,7 @@ use crate::{
         item::{Chest, ItemAssets, Items},
         player::Player,
     },
-    in_game::popup::*,
+    in_game::popup_with_images::*,
     schedule::InGameSet,
     utils::collisions::{start_event_filter, QueryEither},
 };

@@ -7,7 +7,7 @@ mod item_plugin;
 mod level_plugin;
 mod pause_menu;
 mod player_plugin;
-mod popup;
+mod popup_with_images;
 
 pub use plugin::InGamePlugins;
 
@@ -16,7 +16,7 @@ mod plugin {
     use super::*;
     use crate::{
         cursor::{grab_cursor, ungrab_cursor},
-        in_game::popup::PopupWithImages,
+        in_game::popup_with_images::PopupWithImages,
         schedule::{GameState, InGameSet, InGameState},
         utils::{blink::Blink, invulnerable::Invulnerable},
     };
@@ -37,7 +37,7 @@ mod plugin {
                 .add(pause_menu::pause_menu_plugin)
                 .add(item_plugin::item_plugin)
                 .add(end_level_menu::end_level_menu_plugin)
-                .add(popup::popup_plugin)
+                .add(popup_with_images::popup_with_images_plugin)
                 .add(in_game_plugin)
         }
     }

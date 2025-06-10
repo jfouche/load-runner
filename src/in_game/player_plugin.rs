@@ -21,17 +21,13 @@ use bevy_rapier2d::prelude::*;
 use std::time::Duration;
 
 pub fn player_plugin(app: &mut App) {
-    app.add_event::<PlayerDeathEvent>()
-        // STARTUP
-        .add_systems(Startup, load_assets)
-        .add_systems(Update, (spawn_ground_sensor, set_texture_atlas))
-        // IN GAME
+    app.init_resource::<PlayerAssets>()
+        .add_event::<PlayerDeathEvent>()
         .add_systems(Update, movement.in_set(InGameSet::UserInput))
         .add_systems(
             Update,
             (
                 (animate_walk, animate_jump).after(tick_and_update_sprite),
-                player_dying,
                 animate_death,
             )
                 .in_set(InGameSet::EntityUpdate),
@@ -39,88 +35,31 @@ pub fn player_plugin(app: &mut App) {
         .add_systems(
             Update,
             (enemy_hit_player, player_hits_enemy).in_set(InGameSet::CollisionDetection),
-        );
+        )
+        .add_observer(init_player_sprite)
+        .add_observer(spawn_ground_sensor)
+        .add_observer(player_dying);
 }
 
-fn load_assets(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+fn init_player_sprite(
+    trigger: Trigger<OnAdd, Player>,
+    mut players: Query<&mut Sprite, With<Player>>,
+    assets: Res<PlayerAssets>,
 ) {
-    // WALK
-    let walk_sprites = asset_server.load("player/walk.png");
-    let walk_layout = TextureAtlasLayout::from_grid(
-        UVec2::splat(16),
-        8,
-        4,
-        Some(UVec2::splat(64)),
-        Some(UVec2::splat(32)),
-    );
-    let walk_atlas_layout = texture_atlas_layouts.add(walk_layout);
-
-    // JUMP
-    let jump_sprites = asset_server.load("player/jump.png");
-    let jump_layout = TextureAtlasLayout::from_grid(
-        UVec2::splat(16),
-        6,
-        4,
-        Some(UVec2::splat(64)),
-        Some(UVec2::splat(32)),
-    );
-    let jump_atlas_layout = texture_atlas_layouts.add(jump_layout);
-
-    // DEATH
-    let death_sprites = asset_server.load("player/death.png");
-    let death_layout = TextureAtlasLayout::from_grid(
-        UVec2::splat(16),
-        6,
-        4,
-        Some(UVec2::splat(64)),
-        Some(UVec2::splat(32)),
-    );
-    let death_atlas_layout = texture_atlas_layouts.add(death_layout);
-
-    // ASSET RESOURCE
-    let assets = PlayerAssets {
-        walk_sprites,
-        walk_atlas_layout,
-        jump_sprites,
-        jump_atlas_layout,
-        death_sprites,
-        death_atlas_layout,
-    };
-    commands.insert_resource(assets);
-}
-
-fn set_texture_atlas(
-    mut players: Query<&mut Sprite, Added<Player>>,
-    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-) {
-    if let Ok(mut sprite) = players.single_mut() {
-        let layout = TextureAtlasLayout::from_grid(
-            UVec2::splat(16),
-            8,
-            4,
-            Some(UVec2::splat(64)),
-            Some(UVec2::splat(32)),
-        );
+    if let Ok(mut sprite) = players.get_mut(trigger.target()) {
         sprite.texture_atlas = Some(TextureAtlas {
-            layout: texture_atlas_layouts.add(layout),
+            layout: assets.walk_atlas_layout.clone(),
             index: 16,
         });
     }
 }
 
 /// Spawn a [Sensor] at the bottom of a collider to detect when it is on the ground
-fn spawn_ground_sensor(
-    mut commands: Commands,
-    detect_ground_for: Query<(Entity, &Collider), Added<GroundDetection>>,
-) {
-    for (entity, _collider) in &detect_ground_for {
-        commands.entity(entity).with_children(|builder| {
-            builder.spawn(GroundSensorCollider::new(entity, Vec2::new(7.0, 8.0)));
-        });
-    }
+fn spawn_ground_sensor(trigger: Trigger<OnAdd, GroundDetection>, mut commands: Commands) {
+    commands.spawn((
+        GroundSensorCollider::new(trigger.target(), Vec2::new(7.0, 8.0)),
+        ChildOf(trigger.target()),
+    ));
 }
 
 fn next_sprite_index_option(indices: &[usize], current: usize) -> Option<usize> {
@@ -188,7 +127,7 @@ fn animate_walk(
                 atlas.index = next_sprite_index_repeat(&MOVE_LEFT_INDICES, atlas.index);
             } else if climber.climbing {
                 // Climbing
-                let idx = if velocity.is_climbing() {
+                let idx = if velocity.is_moving_vertical() {
                     // Moving
                     next_sprite_index_repeat(&CLIMB_INDICES, atlas.index)
                 } else {
@@ -232,12 +171,12 @@ fn animate_jump(
     }
 }
 
-// TODO: move to observer
 fn player_dying(
-    mut players: Query<&mut Sprite, (With<Player>, Added<Dying>)>,
+    trigger: Trigger<OnAdd, Dying>,
+    mut players: Query<&mut Sprite, With<Player>>,
     assets: Res<PlayerAssets>,
 ) {
-    if let Ok(mut sprite) = players.single_mut() {
+    if let Ok(mut sprite) = players.get_mut(trigger.target()) {
         sprite.image = assets.death_sprites.clone();
         sprite.texture_atlas = Some(TextureAtlas {
             layout: assets.death_atlas_layout.clone(),

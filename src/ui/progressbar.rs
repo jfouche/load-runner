@@ -6,7 +6,7 @@ pub fn plugin(app: &mut App) {
     app.add_systems(Update, (create_progress_bars, update_progress_bars));
 }
 
-/// The [ProgressBar] component should be nested with a [bevy::ui::node_bundles::NodeBundle]
+/// The [ProgressBar] component should be nested with a bevy Node
 #[derive(Debug, Clone, Component)]
 pub struct ProgressBar {
     pub foreground: Color,
