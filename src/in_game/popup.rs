@@ -3,7 +3,8 @@ use crate::ui::*;
 use bevy::prelude::*;
 
 pub fn popup_plugin(app: &mut App) {
-    app.add_systems(Update, (spawn_popup, close_popup));
+    app.add_systems(Update, (close_popup))
+        .add_observer(on_spawn_popup);
 }
 
 #[derive(Component, Default)]
@@ -44,7 +45,7 @@ pub struct PopupBundle {
     tag: Popup,
     content: PopupContent,
     name: Name,
-    node: NodeBundle,
+    node: Node,
     close_event: PopupCloseEvent,
 }
 
@@ -86,7 +87,8 @@ impl PopupBundle {
     // }
 }
 
-fn spawn_popup(
+fn on_spawn_popup(
+    trigger: Trigger<OnAdd, Popup>,
     mut commands: Commands,
     popups: Query<(Entity, &PopupContent, &PopupCloseEvent), Added<Popup>>,
 ) {

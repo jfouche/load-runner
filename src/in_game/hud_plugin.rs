@@ -1,5 +1,6 @@
 use crate::components::*;
 use crate::schedule::InGameSet;
+use crate::theme::widget;
 use crate::ui::*;
 use bevy::prelude::*;
 
@@ -33,7 +34,7 @@ fn spawn_player_items(mut commands: Commands) {
             position_type: PositionType::Absolute,
             top: Val::Px(10.0),
             left: Val::Px(10.0),
-            ..hsizer()
+            ..widget::hsizer()
         },
         BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 0.2)),
     ));

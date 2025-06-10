@@ -8,6 +8,22 @@ use bevy::{
 };
 use std::borrow::Cow;
 
+pub fn hsizer() -> Node {
+    Node {
+        flex_direction: FlexDirection::Row,
+        align_items: AlignItems::Center,
+        ..default()
+    }
+}
+
+pub fn vsizer() -> Node {
+    Node {
+        flex_direction: FlexDirection::Column,
+        align_items: AlignItems::Center,
+        ..default()
+    }
+}
+
 /// A root UI node that fills the window and centers its content.
 pub fn ui_root(name: impl Into<Cow<'static, str>>) -> impl Bundle {
     (

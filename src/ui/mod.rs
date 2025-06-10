@@ -1,10 +1,10 @@
 mod fade;
-mod menu;
+// mod menu;
 mod progressbar;
 
 use bevy::{app::PluginGroupBuilder, prelude::*};
 pub use fade::*;
-pub use menu::*;
+// pub use menu::*;
 pub use progressbar::*;
 
 pub struct UiPlugins;
@@ -17,25 +17,18 @@ impl PluginGroup for UiPlugins {
     }
 }
 
-pub fn fullscreen_style() -> Style {
-    Style {
+pub fn fullscreen_node() -> Node {
+    Node {
         width: Val::Percent(100.0),
         height: Val::Percent(100.0),
         ..default()
     }
 }
 
-pub fn centered_style() -> Style {
-    Style {
+pub fn centered() -> Node {
+    Node {
         align_items: AlignItems::Center,
         justify_content: JustifyContent::Center,
-        ..fullscreen_style()
-    }
-}
-
-pub fn centered() -> NodeBundle {
-    NodeBundle {
-        style: centered_style(),
         ..default()
     }
 }

@@ -1,25 +1,26 @@
-use bevy::input::common_conditions::input_just_pressed;
-
-use super::*;
-use crate::schedule::InGameSet;
-use crate::theme::widget;
-use crate::ui::*;
+use crate::{
+    components::{despawn_all, GameState, InGameState, PlayerDeathEvent},
+    cursor::ungrab_cursor,
+    schedule::InGameSet,
+    theme::widget,
+};
+use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 ///
 /// Plugin
 ///
 pub fn plugin(app: &mut App) {
-    app.add_systems(Update, on_player_death.in_set(InGameSet::EntityUpdate))
-        .add_systems(
-            OnEnter(InGameState::PlayerDied),
-            (ungrab_cursor, spawn_death_menu),
-        )
-        .add_systems(OnExit(InGameState::PlayerDied), despawn_all::<DeathMenu>)
-        .add_systems(
-            Update,
-            back_to_menu
-                .run_if(in_state(InGameState::PlayerDied).and(input_just_pressed(KeyCode::Enter))),
-        );
+    app.add_systems(
+        OnEnter(InGameState::PlayerDied),
+        (ungrab_cursor, spawn_death_menu),
+    )
+    .add_systems(OnExit(InGameState::PlayerDied), despawn_all::<DeathMenu>)
+    .add_systems(
+        Update,
+        back_to_menu
+            .run_if(in_state(InGameState::PlayerDied).and(input_just_pressed(KeyCode::Enter))),
+    )
+    .add_systems(Update, on_player_death.in_set(InGameSet::EntityUpdate));
 }
 
 #[derive(Component)]
@@ -43,17 +44,7 @@ enum MenuButtonAction {
 }
 
 fn spawn_death_menu(mut commands: Commands) {
-    commands
-        .spawn((centered(), Name::new("DeathMenu"), DeathMenu))
-        .with_children(|wnd| {
-            wnd.spawn(menu()).with_children(|menu| {
-                menu.spawn(menu_title("You died !"));
-                menu.spawn((button_bundle(), MenuButtonAction::QuitGame))
-                    .with_children(|parent| {
-                        parent.spawn(button_text("Quit"));
-                    });
-            });
-        });
+    commands.spawn(death_menu());
 }
 
 fn on_player_death(
