@@ -22,7 +22,6 @@ use std::time::Duration;
 
 pub fn player_plugin(app: &mut App) {
     app.init_resource::<PlayerAssets>()
-        .add_event::<PlayerDeathEvent>()
         .add_systems(Update, movement.in_set(InGameSet::UserInput))
         .add_systems(
             Update,
@@ -189,7 +188,6 @@ fn animate_death(
     mut commands: Commands,
     time: Res<Time>,
     mut players: Query<(Entity, &mut AnimationTimer, &mut Sprite), (With<Player>, With<Dying>)>,
-    mut death_events: EventWriter<PlayerDeathEvent>,
 ) {
     const DEATH_INDICES: [usize; 6] = [0, 1, 2, 3, 4, 5];
 
@@ -202,10 +200,10 @@ fn animate_death(
                 .expect("A player should have a TextureAtlas");
             match DEATH_INDICES.iter().position(|&v| v == atlas.index) {
                 Some(idx) if idx >= DEATH_INDICES.len() - 1 => {
-                    death_events.write(PlayerDeathEvent); // TODO: trigger
                     commands
                         .entity(player_entity)
                         .remove::<(Dying, AnimationTimer, ColliderBundle)>();
+                    commands.trigger(PlayerDeathEvent);
                 }
                 Some(idx) => atlas.index = DEATH_INDICES[idx + 1],
                 None => unreachable!(),

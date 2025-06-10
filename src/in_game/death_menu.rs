@@ -1,7 +1,7 @@
 use crate::{
     components::{despawn_all, player::PlayerDeathEvent},
     cursor::ungrab_cursor,
-    schedule::{GameState, InGameSet, InGameState},
+    schedule::{GameState, InGameState},
     theme::widget,
 };
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
@@ -20,7 +20,7 @@ pub fn plugin(app: &mut App) {
         back_to_menu
             .run_if(in_state(InGameState::PlayerDied).and(input_just_pressed(KeyCode::Enter))),
     )
-    .add_systems(Update, on_player_death.in_set(InGameSet::EntityUpdate));
+    .add_observer(on_player_death);
 }
 
 #[derive(Component)]
@@ -43,12 +43,10 @@ fn spawn_death_menu(mut commands: Commands) {
 }
 
 fn on_player_death(
-    mut death_events: EventReader<PlayerDeathEvent>,
+    _trigger: Trigger<PlayerDeathEvent>,
     mut in_game_state: ResMut<NextState<InGameState>>,
 ) {
-    for _ in death_events.read() {
-        in_game_state.set(InGameState::PlayerDied);
-    }
+    in_game_state.set(InGameState::PlayerDied);
 }
 
 fn back_to_menu(

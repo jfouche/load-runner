@@ -7,7 +7,7 @@ use crate::{
             WallBundle, WaterBundle, COLLISIONS_LAYER, DIRT_INT_CELL, LADDER_INT_CELL,
             STONE_INT_CELL, WATER_INT_CELL,
         },
-        player::{Player, PlayerBundle},
+        player::{LdtkPlayerBundle, Player},
     },
     in_game::popup_with_images::popup_with_images,
     schedule::{GameState, InGameSet, InGameState},
@@ -32,7 +32,7 @@ pub fn level_plugin(app: &mut App) {
         .register_ldtk_int_cell::<LadderBundle>(LADDER_INT_CELL)
         .register_ldtk_int_cell::<WallBundle>(STONE_INT_CELL)
         .register_ldtk_int_cell::<WaterBundle>(WATER_INT_CELL)
-        .register_ldtk_entity::<PlayerBundle>("Player")
+        .register_ldtk_entity::<LdtkPlayerBundle>("Player")
         .register_ldtk_entity::<MobBundle>("Mob")
         .register_ldtk_entity::<ChestBundle>("Chest")
         .register_ldtk_entity::<DoorBundle>("Door")
