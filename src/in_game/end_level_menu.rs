@@ -2,7 +2,6 @@ use crate::{
     components::despawn_all,
     schedule::{GameState, InGameState},
     theme::widget,
-    ui::*,
 };
 use bevy::prelude::*;
 
@@ -21,15 +20,9 @@ fn end_level_menu() -> impl Bundle {
     (
         EndLevelMenu,
         Name::new("EndLevelMenu"),
-        centered(),
+        widget::centered(),
         children![widget::button("Quit game", on_quit_game)],
     )
-}
-
-// All actions that can be triggered from a button click
-#[derive(Component, PartialEq)]
-enum MenuButtonAction {
-    QuitGame,
 }
 
 fn spawn_menu(mut commands: Commands) {

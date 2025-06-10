@@ -8,6 +8,7 @@ pub struct DespawnAfter {
 }
 
 impl DespawnAfter {
+    #[allow(dead_code)]
     pub fn new(duration: Duration) -> Self {
         DespawnAfter {
             timer: Timer::new(duration, TimerMode::Once),
@@ -15,6 +16,7 @@ impl DespawnAfter {
         }
     }
 
+    #[allow(dead_code)]
     pub fn pause(&mut self, pause: bool) {
         self.pause = pause;
     }

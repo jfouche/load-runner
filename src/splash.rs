@@ -1,4 +1,7 @@
-use crate::{components::despawn_all, cursor::ungrab_cursor, schedule::GameState};
+use crate::{
+    asset_tracking::ResourceHandles, components::despawn_all, cursor::ungrab_cursor,
+    schedule::GameState,
+};
 use bevy::prelude::*;
 
 pub fn splash_plugin(app: &mut App) {
@@ -60,11 +63,11 @@ fn goto_main_menu(
     mut game_state: ResMut<NextState<GameState>>,
     keys: Res<ButtonInput<KeyCode>>,
     mouse: Res<ButtonInput<MouseButton>>,
+    resources: Res<ResourceHandles>,
 ) {
-    if keys.get_pressed().len() != 0 {
-        game_state.set(GameState::Menu);
-    }
-    if mouse.pressed(MouseButton::Left) {
-        game_state.set(GameState::Menu);
+    if resources.is_all_done() {
+        if keys.get_pressed().len() != 0 || mouse.pressed(MouseButton::Left) {
+            game_state.set(GameState::Menu);
+        }
     }
 }

@@ -38,11 +38,6 @@ fn death_menu() -> impl Bundle {
     )
 }
 
-#[derive(Component, PartialEq)]
-enum MenuButtonAction {
-    QuitGame,
-}
-
 fn spawn_death_menu(mut commands: Commands) {
     commands.spawn(death_menu());
 }

@@ -24,6 +24,14 @@ pub fn vsizer() -> Node {
     }
 }
 
+pub fn centered() -> Node {
+    Node {
+        align_items: AlignItems::Center,
+        justify_content: JustifyContent::Center,
+        ..default()
+    }
+}
+
 /// A root UI node that fills the window and centers its content.
 pub fn ui_root(name: impl Into<Cow<'static, str>>) -> impl Bundle {
     (

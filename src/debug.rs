@@ -11,15 +11,27 @@ use bevy_ecs_ldtk::{
     prelude::*,
     utils::{translation_to_grid_coords, translation_to_ldtk_pixel_coords},
 };
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_inspector_egui::{
+    bevy_egui::{EguiContext, EguiContextPass, EguiPlugin},
+    bevy_inspector::{self, Filter},
+    egui,
+    quick::WorldInspectorPlugin,
+    DefaultInspectorConfigPlugin,
+};
 use bevy_rapier2d::prelude::*;
 use std::time::Duration;
 
 pub fn plugin(app: &mut App) {
     app.add_plugins((
-        WorldInspectorPlugin::new(),
+        EguiPlugin {
+            enable_multipass_for_primary_context: true,
+        },
+        DefaultInspectorConfigPlugin,
+        WorldInspectorPlugin::new().run_if(debug_is_active),
         RapierDebugRenderPlugin::default(),
     ))
+    .insert_resource(DebugMode(true))
+    .add_systems(EguiContextPass, inspector_ui.run_if(debug_is_active))
     .add_systems(
         Update,
         (toggle_grab, display_player_items).in_set(InGameSet::UserInput),
@@ -40,6 +52,33 @@ pub fn plugin(app: &mut App) {
             state_transition::<InGameState>,
         ),
     );
+}
+
+#[derive(Resource, Deref, DerefMut)]
+struct DebugMode(bool);
+
+fn debug_is_active(debug: Res<DebugMode>) -> bool {
+    **debug
+}
+
+fn inspector_ui(world: &mut World) {
+    let Ok(mut egui_context) = world
+        .query_filtered::<&mut EguiContext, With<PrimaryWindow>>()
+        .single(world)
+        .cloned()
+    else {
+        return;
+    };
+    egui::Window::new("World").show(egui_context.get_mut(), |ui| {
+        egui::ScrollArea::both().show(ui, |ui| {
+            let filter = Filter::<(Without<ChildOf>, Without<Observer>)>::from_ui_fuzzy(
+                ui,
+                egui::Id::new("KTE DEBUG INSPECTOR FILTER"),
+            );
+            bevy_inspector::ui_for_entities_filtered(world, ui, true, &filter);
+            ui.allocate_space(ui.available_size());
+        });
+    });
 }
 
 fn toggle_grab(

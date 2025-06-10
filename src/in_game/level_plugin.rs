@@ -11,7 +11,7 @@ use crate::{
     },
     in_game::popup::popup_with_images,
     schedule::{GameState, InGameSet, InGameState},
-    ui::{fader, FaderFinishEvent},
+    ui::fade::{fader, FaderFinishEvent},
     utils::collisions::{start_event_filter, QueryEither},
 };
 use bevy::{ecs::query::QuerySingleError, prelude::*};
@@ -118,8 +118,10 @@ fn spawn_wall_collision(
     level_query: Query<(Entity, &LevelIid)>,
     ldtk_projects: Query<&LdtkProjectHandle>,
     ldtk_project_assets: Res<Assets<LdtkProject>>,
-) -> Result {
-    let ldtk_project = ldtk_projects.single()?;
+) {
+    let Ok(ldtk_project) = ldtk_projects.single() else {
+        return;
+    };
 
     let mut level_colliders = LevelColliders::new();
     wall_query
@@ -164,7 +166,6 @@ fn spawn_wall_collision(
             });
         }
     }
-    Ok(())
 }
 
 fn update_level_selection(

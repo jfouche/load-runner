@@ -1,13 +1,6 @@
 // This example shows off a more in-depth implementation of a game with `bevy_ecs_ldtk`.
 // Please run with `--release`.
 
-use bevy::prelude::*;
-use bevy_rapier2d::prelude::*;
-
-use crate::utils::{
-    blink::BlinkPlugin, despawn_after::despawn_after_plugin, invulnerable::InvulnerabilityPlugin,
-};
-
 mod asset_tracking;
 mod camera;
 mod components;
@@ -20,6 +13,9 @@ mod splash;
 mod theme;
 mod ui;
 mod utils;
+
+use bevy::prelude::*;
+use bevy_rapier2d::prelude::*;
 
 const PIXELS_PER_METER: f32 = 100.0;
 
@@ -40,11 +36,15 @@ fn main() {
         ))
         .add_plugins(debug::plugin)
         .add_plugins((
-            BlinkPlugin,
-            InvulnerabilityPlugin,
-            despawn_after_plugin,
+            ui::progressbar::plugin,
+            ui::fade::plugin,
+            utils::blink::BlinkPlugin,
+            utils::invulnerable::InvulnerabilityPlugin,
+            utils::despawn_after::despawn_after_plugin,
+        ))
+        .add_plugins((
+            asset_tracking::asset_tracking_plugin,
             schedule::schedule_plugin,
-            ui::UiPlugins,
             camera::camera_plugin,
             splash::splash_plugin,
             main_menu::main_menu_plugin,

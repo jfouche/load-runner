@@ -12,7 +12,6 @@ struct MainMenu;
 fn main_menu() -> impl Bundle {
     (
         MainMenu,
-        Name::new("MainMenu"),
         widget::ui_root("MainMenu"),
         GlobalZIndex(2),
         children![

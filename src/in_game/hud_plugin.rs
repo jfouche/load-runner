@@ -7,7 +7,7 @@ use crate::{
     },
     schedule::{GameState, InGameSet},
     theme::widget,
-    ui::ProgressBar,
+    ui::progressbar::ProgressBar,
 };
 use bevy::prelude::*;
 
