@@ -41,13 +41,13 @@ pub fn schedule_plugin(app: &mut App) {
         )
         .add_systems(
             OnEnter(GameState::InGame),
-            apply_deferred
+            ApplyDeferred
                 .after(InGameLoadingSet::CreateLevel)
                 .before(InGameLoadingSet::SpawnLevelEntities),
         )
         .add_systems(
             Update,
-            apply_deferred
+            ApplyDeferred
                 .after(InGameSet::DespawnEntities)
                 .before(InGameSet::UserInput),
         )

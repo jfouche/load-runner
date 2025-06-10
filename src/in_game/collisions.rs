@@ -1,4 +1,4 @@
-use bevy::ecs::query::{QueryData, QueryFilter, WorldQuery};
+use bevy::ecs::query::{QueryData, QueryFilter};
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
@@ -14,22 +14,14 @@ pub fn start_event_filter(event: &CollisionEvent) -> Option<(&Entity, &Entity)> 
 ///
 /// Example:
 /// ```
-/// query.iter()
-///     .filter_map(query.get_either(e1, e2))
-///     .map(|(data, found_entity, other_entity)| {
-///         //...
-///     })
+/// query1.iter().filter_map(query.get_either(e1, e2)).map(|(data, e1, e2)|{})
 /// ```
 pub trait QueryEither<'w, D>
 where
     D: QueryData<ReadOnly = D>,
 {
     /// get either `e1` or `e2`, returning a `([QueryData], [Entity from query], [other Entity])`
-    fn get_either(
-        &'w self,
-        e1: Entity,
-        e2: Entity,
-    ) -> Option<(<D as WorldQuery>::Item<'w>, Entity, Entity)>;
+    fn get_either(&'w self, e1: Entity, e2: Entity) -> Option<(D::Item<'w>, Entity, Entity)>;
 }
 
 impl<'w, D, F> QueryEither<'w, D> for Query<'w, '_, D, F>
@@ -37,11 +29,7 @@ where
     D: QueryData<ReadOnly = D>,
     F: QueryFilter,
 {
-    fn get_either(
-        &'w self,
-        e1: Entity,
-        e2: Entity,
-    ) -> Option<(<D as WorldQuery>::Item<'w>, Entity, Entity)> {
+    fn get_either(&'w self, e1: Entity, e2: Entity) -> Option<(D::Item<'w>, Entity, Entity)> {
         self.get(e1)
             .map(|data| (data, e1, e2))
             .or(self.get(e2).map(|data| (data, e2, e1)))

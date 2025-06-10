@@ -96,8 +96,8 @@ pub struct DoorBundle {
     name: Name,
     #[from_entity_instance]
     expect: Items,
-    #[sprite_sheet_bundle]
-    sprite_sheet_bundle: LdtkSpriteSheetBundle,
+    #[sprite_sheet]
+    sprite_sheet: Sprite,
     collider_bundle: ColliderBundle,
 }
 
@@ -107,7 +107,7 @@ impl Default for DoorBundle {
             tag: Door,
             name: Name::new("Door"),
             expect: Items::default(),
-            sprite_sheet_bundle: LdtkSpriteSheetBundle::default(),
+            sprite_sheet: Sprite::default(),
             collider_bundle: ColliderBundle {
                 collider: Collider::cuboid(8., 16.),
                 rigid_body: RigidBody::Fixed,
@@ -124,8 +124,8 @@ pub struct EndLevel;
 pub struct EndLevelBundle {
     tag: EndLevel,
     name: Name,
-    #[sprite_sheet_bundle]
-    sprite_sheet_bundle: LdtkSpriteSheetBundle,
+    #[sprite_sheet]
+    sprite_sheet: Sprite,
     collider_bundle: ColliderBundle,
     sensor: Sensor,
 }
@@ -135,7 +135,7 @@ impl Default for EndLevelBundle {
         EndLevelBundle {
             tag: EndLevel,
             name: Name::new("EndLevel"),
-            sprite_sheet_bundle: LdtkSpriteSheetBundle::default(),
+            sprite_sheet: Sprite::default(),
             collider_bundle: ColliderBundle {
                 collider: Collider::cuboid(8., 16.),
                 rigid_body: RigidBody::Fixed,
@@ -253,7 +253,7 @@ pub struct WallColliderBundle {
     collider: Collider,
     body: RigidBody,
     friction: Friction,
-    transform: TransformBundle,
+    transform: Transform,
 }
 
 impl WallColliderBundle {
@@ -272,7 +272,7 @@ impl WallColliderBundle {
             collider,
             body: RigidBody::Fixed,
             friction: Friction::new(1.0),
-            transform: TransformBundle::from_transform(transform),
+            transform,
         }
     }
 }

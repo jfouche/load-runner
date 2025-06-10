@@ -1,9 +1,9 @@
+use bevy::input::common_conditions::input_just_pressed;
+
 use super::*;
 use crate::schedule::InGameSet;
+use crate::theme::widget;
 use crate::ui::*;
-
-#[derive(Component)]
-struct DeathMenu;
 
 ///
 /// Plugin
@@ -17,8 +17,24 @@ pub fn plugin(app: &mut App) {
         .add_systems(OnExit(InGameState::PlayerDied), despawn_all::<DeathMenu>)
         .add_systems(
             Update,
-            menu_action.run_if(in_state(InGameState::PlayerDied)),
+            back_to_menu
+                .run_if(in_state(InGameState::PlayerDied).and(input_just_pressed(KeyCode::Enter))),
         );
+}
+
+#[derive(Component)]
+struct DeathMenu;
+
+fn death_menu() -> impl Bundle {
+    (
+        DeathMenu,
+        Name::new("DeathMenu"),
+        widget::popup(),
+        children![
+            widget::popup_title("You died !"),
+            widget::button("Back to menu", on_back_to_menu)
+        ],
+    )
 }
 
 #[derive(Component, PartialEq)]
@@ -40,23 +56,6 @@ fn spawn_death_menu(mut commands: Commands) {
         });
 }
 
-fn menu_action(
-    interaction_query: Query<
-        (&Interaction, &MenuButtonAction),
-        (Changed<Interaction>, With<Button>),
-    >,
-    mut in_game_state: ResMut<NextState<InGameState>>,
-    mut game_state: ResMut<NextState<GameState>>,
-) {
-    for (interaction, menu_button_action) in &interaction_query {
-        if *interaction == Interaction::Pressed && *menu_button_action == MenuButtonAction::QuitGame
-        {
-            in_game_state.set(InGameState::Disabled);
-            game_state.set(GameState::Menu);
-        }
-    }
-}
-
 fn on_player_death(
     mut death_events: EventReader<PlayerDeathEvent>,
     mut in_game_state: ResMut<NextState<InGameState>>,
@@ -64,4 +63,20 @@ fn on_player_death(
     for _ in death_events.read() {
         in_game_state.set(InGameState::PlayerDied);
     }
+}
+
+fn back_to_menu(
+    mut game_state: ResMut<NextState<GameState>>,
+    mut in_game_state: ResMut<NextState<InGameState>>,
+) {
+    game_state.set(GameState::Menu);
+    in_game_state.set(InGameState::Disabled);
+}
+
+fn on_back_to_menu(
+    _trigger: Trigger<Pointer<Click>>,
+    game_state: ResMut<NextState<GameState>>,
+    in_game_state: ResMut<NextState<InGameState>>,
+) {
+    back_to_menu(game_state, in_game_state);
 }

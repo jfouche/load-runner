@@ -101,7 +101,7 @@ pub struct GroundSensorCollider {
     events: ActiveEvents,
     collider: Collider,
     sensor: Sensor,
-    transform: TransformBundle,
+    transform: Transform,
     ground_sensor: GroundSensor,
 }
 
@@ -113,7 +113,7 @@ impl GroundSensorCollider {
             events: ActiveEvents::COLLISION_EVENTS,
             collider: Collider::cuboid(half_extents.x / 2.0, 1.),
             sensor: Sensor,
-            transform: TransformBundle::from_transform(Transform::from_translation(pos)),
+            transform: Transform::from_translation(pos),
             ground_sensor: GroundSensor {
                 ground_detection_entity: parent,
                 intersecting_ground_entities: HashSet::new(),

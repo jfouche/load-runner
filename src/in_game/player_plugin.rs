@@ -79,10 +79,10 @@ fn load_assets(
 }
 
 fn set_texture_atlas(
-    mut players: Query<&mut TextureAtlas, Added<Player>>,
+    mut players: Query<&mut Sprite, Added<Player>>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
-    if let Ok(mut atlas) = players.get_single_mut() {
+    if let Ok(mut sprite) = players.single_mut() {
         let layout = TextureAtlasLayout::from_grid(
             UVec2::splat(16),
             8,
@@ -90,9 +90,10 @@ fn set_texture_atlas(
             Some(UVec2::splat(64)),
             Some(UVec2::splat(32)),
         );
-        let texture_atlas_layout = texture_atlas_layouts.add(layout);
-        atlas.layout = texture_atlas_layout;
-        atlas.index = 16;
+        sprite.texture_atlas = Some(TextureAtlas {
+            layout: texture_atlas_layouts.add(layout),
+            index: 16,
+        });
     }
 }
 
@@ -126,38 +127,33 @@ fn next_sprite_index_once(indices: &[usize], current: usize) -> usize {
 
 fn tick_and_update_sprite(
     mut players: Query<
-        (
-            &Jumping,
-            &mut Handle<Image>,
-            &mut AnimationTimer,
-            &mut TextureAtlas,
-        ),
+        (&Jumping, &mut Sprite, &mut AnimationTimer),
         (With<Player>, Without<Dying>),
     >,
     assets: Res<PlayerAssets>,
     time: Res<Time>,
 ) {
-    if let Ok((&jumping, mut image, mut timer, mut atlas)) = players.get_single_mut() {
+    if let Ok((&jumping, mut sprite, mut timer)) = players.single_mut() {
         timer.tick(time.delta());
         if *jumping {
-            *image = assets.jump_sprites.clone();
-            atlas.layout = assets.jump_atlas_layout.clone();
+            sprite.image = assets.jump_sprites.clone();
+            sprite.texture_atlas = Some(TextureAtlas {
+                layout: assets.jump_atlas_layout.clone(),
+                index: 0,
+            });
         } else {
-            *image = assets.walk_sprites.clone();
-            atlas.layout = assets.walk_atlas_layout.clone();
+            sprite.image = assets.walk_sprites.clone();
+            sprite.texture_atlas = Some(TextureAtlas {
+                layout: assets.walk_atlas_layout.clone(),
+                index: 0,
+            });
         }
     }
 }
 
 fn animate_walk(
     mut players: Query<
-        (
-            &Velocity,
-            &Climber,
-            &Jumping,
-            &AnimationTimer,
-            &mut TextureAtlas,
-        ),
+        (&Velocity, &Climber, &Jumping, &AnimationTimer, &mut Sprite),
         (With<Player>, Without<Dying>),
     >,
 ) {
@@ -166,8 +162,12 @@ fn animate_walk(
     const CLIMB_INDICES: [usize; 8] = [24, 25, 26, 27, 28, 29, 30, 31];
     const FIXED_INDICE: usize = 16;
 
-    if let Ok((velocity, climber, &jumping, timer, mut atlas)) = players.get_single_mut() {
+    if let Ok((velocity, climber, &jumping, timer, mut sprite)) = players.single_mut() {
         if !*jumping && timer.just_finished() {
+            let atlas = sprite
+                .texture_atlas
+                .as_mut()
+                .expect("A player should have a TextureAtlas");
             if velocity.move_right() {
                 atlas.index = next_sprite_index_repeat(&MOVE_RIGHT_INDICES, atlas.index)
             } else if velocity.move_left() {
@@ -192,7 +192,7 @@ fn animate_walk(
 
 fn animate_jump(
     mut players: Query<
-        (&Velocity, &Jumping, &AnimationTimer, &mut TextureAtlas),
+        (&Velocity, &Jumping, &AnimationTimer, &mut Sprite),
         (With<Player>, Without<Dying>),
     >,
 ) {
@@ -200,8 +200,12 @@ fn animate_jump(
     const JUMP_LEFT_INDICES: [usize; 6] = [6, 7, 8, 9, 10, 11];
     const JUMP_FRONT_INDICES: [usize; 6] = [12, 13, 14, 15, 16, 17];
 
-    if let Ok((velocity, &jumping, timer, mut atlas)) = players.get_single_mut() {
+    if let Ok((velocity, &jumping, timer, mut sprite)) = players.single_mut() {
         if *jumping && timer.just_finished() {
+            let atlas = sprite
+                .texture_atlas
+                .as_mut()
+                .expect("A player should have a TextureAtlas");
             if velocity.move_right() {
                 atlas.index = next_sprite_index_once(&JUMP_RIGHT_INDICES, atlas.index)
             } else if velocity.move_left() {
@@ -214,34 +218,38 @@ fn animate_jump(
     }
 }
 
+// TODO: move to observer
 fn player_dying(
-    mut players: Query<(&mut TextureAtlas, &mut Handle<Image>), (With<Player>, Added<Dying>)>,
+    mut players: Query<&mut Sprite, (With<Player>, Added<Dying>)>,
     assets: Res<PlayerAssets>,
 ) {
-    if let Ok((mut atlas, mut image)) = players.get_single_mut() {
-        *image = assets.death_sprites.clone();
-        atlas.layout = assets.death_atlas_layout.clone();
-        atlas.index = 0;
+    if let Ok(mut sprite) = players.single_mut() {
+        sprite.image = assets.death_sprites.clone();
+        sprite.texture_atlas = Some(TextureAtlas {
+            layout: assets.death_atlas_layout.clone(),
+            index: 0,
+        });
     }
 }
 
 fn animate_death(
     mut commands: Commands,
     time: Res<Time>,
-    mut players: Query<
-        (Entity, &mut AnimationTimer, &mut TextureAtlas),
-        (With<Player>, With<Dying>),
-    >,
+    mut players: Query<(Entity, &mut AnimationTimer, &mut Sprite), (With<Player>, With<Dying>)>,
     mut death_events: EventWriter<PlayerDeathEvent>,
 ) {
     const DEATH_INDICES: [usize; 6] = [0, 1, 2, 3, 4, 5];
 
-    if let Ok((player_entity, mut timer, mut atlas)) = players.get_single_mut() {
+    if let Ok((player_entity, mut timer, mut sprite)) = players.single_mut() {
         timer.tick(time.delta());
         if timer.just_finished() {
+            let atlas = sprite
+                .texture_atlas
+                .as_mut()
+                .expect("A player should have a TextureAtlas");
             match DEATH_INDICES.iter().position(|&v| v == atlas.index) {
                 Some(idx) if idx >= DEATH_INDICES.len() - 1 => {
-                    death_events.send(PlayerDeathEvent);
+                    death_events.write(PlayerDeathEvent); // TODO: trigger
                     commands
                         .entity(player_entity)
                         .remove::<(Dying, AnimationTimer, ColliderBundle)>();
@@ -330,7 +338,7 @@ fn enemy_hit_player(
     mut players: Query<(Entity, &mut Life), With<Player>>,
     enemies: Query<&Damage, With<Enemy>>,
 ) {
-    if let Ok((player_entity, mut life)) = players.get_single_mut() {
+    if let Ok((player_entity, mut life)) = players.single_mut() {
         if let Some(damage) = collisions
             .read()
             .filter_map(start_event_filter)
@@ -365,7 +373,7 @@ fn player_hits_enemy(
                     life.hit(1);
                     if life.is_dead() {
                         // TODO: do not kill it like this
-                        commands.entity(entity).despawn_recursive();
+                        commands.entity(entity).despawn();
                     }
                 }
             });

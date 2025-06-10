@@ -49,7 +49,7 @@ const END_LEVEL_FADE_COLOR: Color = Color::srgba(0.0, 0.0, 0.8, 1.0);
 
 fn show_level(mut commands: Commands) {
     info!("show_level()");
-    commands.spawn(FaderBundle::new(END_LEVEL_FADE_COLOR, Color::NONE, 2.0));
+    commands.spawn(fader(END_LEVEL_FADE_COLOR, Color::NONE, 2.0));
 }
 
 /// wait for fader to finish, and start running
@@ -59,7 +59,7 @@ fn start_level_after_fading(
     mut in_game_state: ResMut<NextState<InGameState>>,
 ) {
     for event in events.read() {
-        if let Some(mut fader) = commands.get_entity(event.entity) {
+        if let Ok(mut fader) = commands.get_entity(event.entity) {
             info!("start_level() - despawn({:?})", event.entity);
             fader.despawn();
         }
@@ -70,9 +70,9 @@ fn start_level_after_fading(
 fn spawn_level(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    ldtk_projects: Query<Entity, With<Handle<LdtkProject>>>,
+    ldtk_projects: Query<Entity, With<LdtkProjectHandle>>,
 ) {
-    match ldtk_projects.get_single() {
+    match ldtk_projects.single() {
         Ok(world_entity) => {
             // A project is already loaded, respawn it
             commands.entity(world_entity).insert(Respawn);
@@ -81,7 +81,7 @@ fn spawn_level(
             // Spawn a new project
             let ldtk_handle = asset_server.load("load-runner.ldtk");
             commands.spawn(LdtkWorldBundle {
-                ldtk_handle,
+                ldtk_handle: ldtk_handle.into(),
                 ..Default::default()
             });
         }
@@ -99,25 +99,29 @@ fn spawn_level(
 /// we can minimize the amount of colliding entities.
 fn spawn_wall_collision(
     mut commands: Commands,
-    wall_query: Query<(&GridCoords, &Parent), Added<Wall>>,
-    parent_query: Query<&Parent, Without<Wall>>,
+    wall_query: Query<(&GridCoords, &ChildOf), Added<Wall>>,
+    parents: Query<&ChildOf, Without<Wall>>,
     level_query: Query<(Entity, &LevelIid)>,
-    ldtk_projects: Query<&Handle<LdtkProject>>,
+    ldtk_projects: Query<&LdtkProjectHandle>,
     ldtk_project_assets: Res<Assets<LdtkProject>>,
-) {
+) -> Result {
+    let ldtk_project = ldtk_projects.single()?;
+
     let mut level_colliders = LevelColliders::new();
-    wall_query.iter().for_each(|(&grid_coords, parent)| {
-        // An intgrid tile's direct parent will be a layer entity, not the level entity
-        // To get the level entity, you need the tile's grandparent.
-        // This is where parent_query comes in.
-        if let Ok(grandparent) = parent_query.get(parent.get()) {
-            level_colliders.add_coord(grandparent.get(), grid_coords);
-        }
-    });
+    wall_query
+        .iter()
+        .for_each(|(&grid_coords, &ChildOf(parent))| {
+            // An intgrid tile's direct parent will be a layer entity, not the level entity
+            // To get the level entity, you need the tile's grandparent.
+            // This is where parent_query comes in.
+            if let Ok(&ChildOf(grandparent)) = parents.get(parent) {
+                level_colliders.add_coord(grandparent, grid_coords);
+            }
+        });
 
     if !wall_query.is_empty() {
         let ldtk_project = ldtk_project_assets
-            .get(ldtk_projects.single())
+            .get(ldtk_project)
             .expect("Project should be loaded if level has spawned");
 
         for (level_entity, level_iid) in &level_query {
@@ -146,18 +150,20 @@ fn spawn_wall_collision(
             });
         }
     }
+    Ok(())
 }
 
 fn update_level_selection(
     level_query: Query<(&LevelIid, &Transform), Without<Player>>,
     player_query: Query<&Transform, With<Player>>,
     mut level_selection: ResMut<LevelSelection>,
-    ldtk_projects: Query<&Handle<LdtkProject>>,
+    ldtk_projects: Query<&LdtkProjectHandle>,
     ldtk_project_assets: Res<Assets<LdtkProject>>,
-) {
+) -> Result {
+    let ldtk_project = ldtk_projects.single()?;
     let ldtk_project = ldtk_project_assets
-        .get(ldtk_projects.single())
-        .expect("Project should be loaded if level has spawned");
+        .get(ldtk_project)
+        .ok_or("Project should be loaded if level has spawned".into())?;
 
     for (level_iid, level_transform) in &level_query {
         let level = ldtk_project
@@ -182,6 +188,7 @@ fn update_level_selection(
             }
         }
     }
+    Ok(())
 }
 
 fn restart_level(
@@ -203,7 +210,7 @@ fn open_door(
     doors: Query<&Items, (With<Door>, Without<Player>)>,
     assets: Res<ItemAssets>,
 ) {
-    let (player_entity, mut player_items) = players.get_single_mut().expect("Player");
+    let (player_entity, mut player_items) = players.single_mut().expect("Player");
     collisions
         .read()
         .filter_map(start_event_filter)
@@ -213,13 +220,13 @@ fn open_door(
             if player_items.contains_items(expected_items) {
                 info!("Player open door");
                 player_items.remove_items(expected_items);
-                commands.entity(door_entity).despawn_recursive();
+                commands.entity(door_entity).despawn();
             } else {
                 // Show a popup that shows the expected items to open the door
                 let mut popup_bundle =
                     PopupBundle::new("Closed door", "You should have the following items");
                 for &item in expected_items.iter() {
-                    popup_bundle.add_image(assets.image_components(item));
+                    popup_bundle.add_image(assets.image_node(item));
                 }
                 commands.spawn(popup_bundle);
             }
@@ -232,7 +239,7 @@ fn end_level(
     end_levels: Query<&EndLevel>,
     mut in_game_state: ResMut<NextState<InGameState>>,
 ) {
-    let player_entity = players.get_single_mut().expect("Player");
+    let player_entity = players.single_mut().expect("Player");
     collisions
         .read()
         .filter_map(start_event_filter)

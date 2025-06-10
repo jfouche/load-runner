@@ -4,6 +4,7 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
+mod asset_tracking;
 mod camera;
 mod components;
 mod cursor;
@@ -12,6 +13,7 @@ mod in_game;
 mod main_menu;
 mod schedule;
 mod splash;
+mod theme;
 mod ui;
 mod utils;
 
@@ -32,7 +34,6 @@ fn main() {
                 .set(ImagePlugin::default_nearest()),
             RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(PIXELS_PER_METER),
         ))
-        .insert_resource(RapierConfiguration::new(PIXELS_PER_METER))
         .add_plugins(debug::plugin)
         .add_plugins((
             schedule::schedule_plugin,

@@ -81,14 +81,18 @@ fn unpause(mut blinks: Query<&mut Blink>, mut invulnerables: Query<&mut Invulner
     }
 }
 
-fn start_physics(mut physics: ResMut<RapierConfiguration>) {
-    physics.physics_pipeline_active = true;
-    physics.query_pipeline_active = true;
+fn start_physics(mut confs: Query<&mut RapierConfiguration, With<DefaultRapierContext>>) {
+    if let Ok(mut conf) = confs.single_mut() {
+        conf.physics_pipeline_active = true;
+        conf.query_pipeline_active = true;
+    }
 }
 
-fn stop_physics(mut physics: ResMut<RapierConfiguration>) {
-    physics.physics_pipeline_active = false;
-    physics.query_pipeline_active = false;
+fn stop_physics(mut confs: Query<&mut RapierConfiguration, With<DefaultRapierContext>>) {
+    if let Ok(mut conf) = confs.single_mut() {
+        conf.physics_pipeline_active = false;
+        conf.query_pipeline_active = false;
+    }
 }
 
 fn reset_physics(mut commands: Commands) {
@@ -100,7 +104,7 @@ fn enter_popup_state(
     query: Query<(), Added<Popup>>,
     mut in_game_state: ResMut<NextState<InGameState>>,
 ) {
-    if query.get_single().is_ok() {
+    if query.single().is_ok() {
         in_game_state.set(InGameState::ShowPopup);
     }
 }

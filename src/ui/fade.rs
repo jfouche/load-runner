@@ -1,28 +1,18 @@
-use super::fullscreen_style;
 use bevy::prelude::*;
 
-#[derive(Bundle)]
-pub struct FaderBundle {
-    name: Name,
-    fader: Fader,
-    node: NodeBundle,
-    timer: FadeTimer,
-}
-
-impl FaderBundle {
-    pub fn new(from: Color, to: Color, duration_secs: f32) -> Self {
-        FaderBundle {
-            name: Name::new("Fade"),
-            fader: Fader { from, to },
-            node: NodeBundle {
-                style: fullscreen_style(),
-                background_color: from.into(),
-                z_index: ZIndex::Global(i32::MAX - 1),
-                ..Default::default()
-            },
-            timer: FadeTimer(Timer::from_seconds(duration_secs, TimerMode::Once)),
-        }
-    }
+pub fn fader(from: Color, to: Color, duration_secs: f32) -> impl Bundle {
+    (
+        Name::new("Fade"),
+        Fader { from, to },
+        Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            ..Default::default()
+        },
+        BackgroundColor(from),
+        ZIndex(i32::MAX - 1),
+        FadeTimer(Timer::from_seconds(duration_secs, TimerMode::Once)),
+    )
 }
 
 #[derive(Event)]
@@ -72,7 +62,8 @@ fn fade(
         let percent = timer.percent();
         bgcolor.0 = fader.color(percent);
         if timer.just_finished() {
-            events.send(FaderFinishEvent { entity });
+            // TODO: trigger
+            events.write(FaderFinishEvent { entity });
         }
     }
 }

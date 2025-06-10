@@ -41,17 +41,15 @@ pub fn button_text(text: &str) -> TextBundle {
     TextBundle::from_section(text, button_text_style())
 }
 
-pub fn menu() -> NodeBundle {
-    let vsizer = vsizer();
-    NodeBundle {
-        background_color: CRIMSON.into(),
-        border_color: BLUE.into(),
-        style: Style {
+pub fn menu() -> impl Bundle {
+    (
+        Node {
             border: UiRect::all(Val::Px(2.0)),
-            ..vsizer.style
+            ..vsizer()
         },
-        ..vsizer
-    }
+        BackgroundColor(CRIMSON.into()),
+        BorderColor(BLUE.into()),
+    )
 }
 
 pub fn menu_title(title: &str) -> TextBundle {
@@ -69,24 +67,18 @@ pub fn menu_title(title: &str) -> TextBundle {
     })
 }
 
-pub fn hsizer() -> NodeBundle {
-    NodeBundle {
-        style: Style {
-            flex_direction: FlexDirection::Row,
-            align_items: AlignItems::Center,
-            ..default()
-        },
+pub fn hsizer() -> Node {
+    Node {
+        flex_direction: FlexDirection::Row,
+        align_items: AlignItems::Center,
         ..default()
     }
 }
 
-pub fn vsizer() -> NodeBundle {
-    NodeBundle {
-        style: Style {
-            flex_direction: FlexDirection::Column,
-            align_items: AlignItems::Center,
-            ..default()
-        },
+pub fn vsizer() -> Node {
+    Node {
+        flex_direction: FlexDirection::Column,
+        align_items: AlignItems::Center,
         ..default()
     }
 }

@@ -70,8 +70,8 @@ pub struct MobBundle {
     #[from_entity_instance]
     speed: Speed,
     damage: Damage,
-    #[sprite_sheet_bundle]
-    sprite_sheet_bundle: LdtkSpriteSheetBundle,
+    #[sprite_sheet]
+    sprite_sheet: Sprite,
     collider_bundle: ColliderBundle,
     collision_groups: CollisionGroups,
     #[ldtk_entity]
@@ -86,7 +86,7 @@ impl Default for MobBundle {
             life: Life::default(),
             speed: Speed::default(),
             damage: Damage(2),
-            sprite_sheet_bundle: LdtkSpriteSheetBundle::default(),
+            sprite_sheet: Sprite::default(),
             collider_bundle: ColliderBundle {
                 collider: Collider::cuboid(15., 15.),
                 rigid_body: RigidBody::KinematicVelocityBased,

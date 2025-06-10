@@ -14,6 +14,33 @@ pub fn splash_plugin(app: &mut App) {
 #[derive(Component)]
 struct SplashScreen;
 
+fn spash_screen() -> impl Bundle {
+    (
+        SplashScreen,
+        Name::new("SplashScreen"),
+        Node {
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
+            flex_direction: FlexDirection::Column,
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            ..default()
+        },
+        children![
+            (
+                Text("Load-Runner".into()),
+                TextFont::from_font_size(80.),
+                TextColor(Color::WHITE)
+            ),
+            (
+                Text("Press any key to continue".into()),
+                TextFont::from_font_size(16.),
+                TextColor(Color::BLACK)
+            ),
+        ],
+    )
+}
+
 #[derive(Component)]
 struct SplashScreenMessage;
 
@@ -21,43 +48,7 @@ const BACKGROUND_COLOR: Color = Color::srgb(0.4, 0.4, 0.4);
 
 fn spawn_splash_screen(mut commands: Commands) {
     commands.insert_resource(ClearColor(BACKGROUND_COLOR));
-    commands
-        .spawn((
-            SplashScreen,
-            Name::new("SplashScreen"),
-            NodeBundle {
-                style: Style {
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::Center,
-                    flex_direction: FlexDirection::Column,
-                    width: Val::Percent(100.0),
-                    height: Val::Percent(100.0),
-                    ..default()
-                },
-                ..default()
-            },
-        ))
-        .with_children(|parent| {
-            parent.spawn(TextBundle::from_section(
-                "Load-Runner",
-                TextStyle {
-                    font_size: 80.0,
-                    color: Color::WHITE,
-                    ..Default::default()
-                },
-            ));
-            parent.spawn((
-                SplashScreenMessage,
-                TextBundle::from_section(
-                    "Press any key to continue",
-                    TextStyle {
-                        font_size: 16.0,
-                        color: Color::BLACK,
-                        ..Default::default()
-                    },
-                ),
-            ));
-        });
+    commands.spawn(spash_screen());
 }
 
 // fn display_continue(mut messages: Query<&mut Text, With<SplashScreenMessage>>) {

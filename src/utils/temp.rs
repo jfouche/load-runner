@@ -24,7 +24,7 @@ fn remove_entity(
     for (entity, mut temp) in temps.iter_mut() {
         temp.tick(time.delta());
         if temp.just_finished() {
-            commands.entity(entity).despawn_recursive();
+            commands.entity(entity).despawn();
         }
     }
 }

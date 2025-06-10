@@ -121,18 +121,21 @@ fn update_on_ground(
 
 fn update_in_water(
     mut in_waters: Query<(&Transform, &mut InWater)>,
-    ldtk_projects: Query<&Handle<LdtkProject>>,
-    level_query: Query<(Entity, &Transform, &LevelIid), Without<OrthographicProjection>>,
-    water_cells: Query<(&GridCoords, &Parent), With<Water>>,
-    parents: Query<&Parent, Without<Water>>,
+    ldtk_projects: Query<&LdtkProjectHandle>,
+    level_query: Query<(Entity, &Transform, &LevelIid)>,
+    water_cells: Query<(&GridCoords, &ChildOf), With<Water>>,
+    parents: Query<&ChildOf, Without<Water>>,
     ldtk_project_assets: Res<Assets<LdtkProject>>,
     level_selection: Res<LevelSelection>,
 ) {
+    let Ok(ldtk_project) = ldtk_projects.single() else {
+        return;
+    };
     for (character_transform, mut in_water) in &mut in_waters {
         level_query
             .iter()
             .filter_map(|(entity, transform, iid)| {
-                let ldtk_project = ldtk_project_assets.get(ldtk_projects.single())?;
+                let ldtk_project = ldtk_project_assets.get(ldtk_project)?;
                 let level = ldtk_project.get_raw_level_by_iid(&iid.to_string())?;
                 let layer_info = level.layer_instances.as_ref()?.get(COLLISIONS_LAYER)?;
                 level_selection
@@ -145,10 +148,10 @@ fn update_in_water(
                 let character_coord =
                     translation_to_grid_coords(translation, IVec2::splat(layer_info.grid_size));
 
-                in_water.0 = water_cells.iter().any(|(&coord, parent)| {
+                in_water.0 = water_cells.iter().any(|(&coord, &ChildOf(parent))| {
                     if coord == character_coord {
-                        if let Ok(grandparent) = parents.get(parent.get()) {
-                            if grandparent.get() == level_entity {
+                        if let Ok(&ChildOf(grandparent)) = parents.get(parent) {
+                            if grandparent == level_entity {
                                 return true;
                             }
                         }

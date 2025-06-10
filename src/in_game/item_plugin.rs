@@ -31,7 +31,7 @@ fn open_chest(
     chests: Query<&Items, (With<Chest>, Without<Player>)>,
     assets: Res<ItemAssets>,
 ) {
-    let (player_entity, mut player_items) = players.get_single_mut().expect("Player");
+    let (player_entity, mut player_items) = players.single_mut().expect("Player");
     collisions
         .read()
         .filter_map(start_event_filter)
@@ -45,12 +45,12 @@ fn open_chest(
             }
 
             // Remove the chest
-            commands.entity(chest_entity).despawn_recursive();
+            commands.entity(chest_entity).despawn();
 
             // Show a popup with chest items
             let mut popup_bundle = PopupBundle::new("Chest opened", "You found");
             for &item in chest_items.iter() {
-                popup_bundle.add_image(assets.image_components(item));
+                popup_bundle.add_image(assets.image_node(item));
             }
             commands.spawn(popup_bundle);
         });

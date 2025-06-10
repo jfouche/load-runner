@@ -27,9 +27,8 @@ pub struct PlayerBundle {
     speed: Speed,
     #[from_entity_instance]
     jump_speed: JumpSpeed,
-    #[sprite_bundle("player/walk.png")]
-    sprite_bundle: SpriteBundle,
-    texture_atlas: TextureAtlas,
+    #[sprite("player/walk.png")]
+    sprite: Sprite,
     animation_timer: AnimationTimer,
     collider_bundle: ColliderBundle,
     collision_groups: CollisionGroups,
@@ -56,8 +55,7 @@ impl Default for PlayerBundle {
             life: Life::default(),
             speed: Speed::default(),
             jump_speed: JumpSpeed::default(),
-            sprite_bundle: SpriteBundle::default(),
-            texture_atlas: TextureAtlas::default(),
+            sprite: Sprite::default(),
             animation_timer: AnimationTimer::default(),
             collider_bundle: ColliderBundle {
                 collider: Collider::round_cuboid(3., 5., 2.),

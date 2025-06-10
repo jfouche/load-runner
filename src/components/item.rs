@@ -1,9 +1,8 @@
-use std::slice::Iter;
-
 use super::*;
 use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
+use std::slice::Iter;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Reflect)]
 pub enum Item {
@@ -82,8 +81,8 @@ pub struct ChestBundle {
     name: Name,
     #[from_entity_instance]
     items: Items,
-    #[sprite_sheet_bundle]
-    sprite_sheet_bundle: LdtkSpriteSheetBundle,
+    #[sprite_sheet]
+    sprite_sheet: Sprite,
     collider_bundle: ColliderBundle,
 }
 
@@ -93,7 +92,7 @@ impl Default for ChestBundle {
             tag: Chest,
             name: Name::new("Chest"),
             items: Items::default(),
-            sprite_sheet_bundle: LdtkSpriteSheetBundle::default(),
+            sprite_sheet: Sprite::default(),
             collider_bundle: ColliderBundle {
                 collider: Collider::cuboid(8., 8.),
                 rigid_body: RigidBody::Dynamic,
@@ -114,30 +113,19 @@ pub struct ItemAssets {
 }
 
 impl ItemAssets {
-    pub fn image_components(&self, item: Item) -> (UiImage, TextureAtlas) {
+    pub fn image_node(&self, item: Item) -> ImageNode {
         let index = match item {
             Item::Boots => 18,
             Item::Key => 83,
             Item::Gem => 1483,
             Item::Unknown => 0,
         };
-        (
-            UiImage::new(self.texture.clone()),
+        ImageNode::from_atlas_image(
+            self.texture.clone(),
             TextureAtlas {
                 layout: self.texture_atlas_layout.clone(),
                 index,
             },
-        )
-    }
-
-    pub fn image_bundle(&self, item: Item) -> (ImageBundle, TextureAtlas) {
-        let components = self.image_components(item);
-        (
-            ImageBundle {
-                image: components.0,
-                ..Default::default()
-            },
-            components.1,
         )
     }
 }

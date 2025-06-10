@@ -42,21 +42,21 @@ fn toggle_grab(
     mut primary_window: Query<&mut Window, With<PrimaryWindow>>,
     keys: Res<ButtonInput<KeyCode>>,
 ) {
-    if let Ok(window) = primary_window.get_single_mut() {
+    if let Ok(window) = primary_window.single_mut() {
         if keys.just_pressed(KeyCode::KeyG) {
-            match window.cursor.grab_mode {
-                bevy::window::CursorGrabMode::None => {
-                    set_grab_cursor(window, true);
-                }
-                _ => {
-                    set_grab_cursor(window, false);
-                }
-            }
+            let grab = match window.cursor_options.grab_mode {
+                bevy::window::CursorGrabMode::None => true,
+                _ => false,
+            };
+            set_grab_cursor(window, grab);
         }
     }
 }
 
-fn display_collision_events(mut collisions: EventReader<CollisionEvent>, names: Query<DebugName>) {
+fn display_collision_events(
+    mut collisions: EventReader<CollisionEvent>,
+    names: Query<NameOrEntity>,
+) {
     let get_name = |e| {
         names
             .get(e)
@@ -82,29 +82,31 @@ fn display_collision_events(mut collisions: EventReader<CollisionEvent>, names: 
 
 fn display_player_position(
     players: Query<&Transform, With<Player>>,
-    ldtk_projects: Query<&Handle<LdtkProject>>,
-    level_query: Query<(&Transform, &LevelIid), (Without<OrthographicProjection>, Without<Player>)>,
+    ldtk_projects: Query<&LdtkProjectHandle>,
+    level_query: Query<(&Transform, &LevelIid), Without<Player>>,
     ldtk_project_assets: Res<Assets<LdtkProject>>,
     level_selection: Res<LevelSelection>,
 ) {
-    if let Ok(player_transform) = players.get_single() {
-        level_query
-            .iter()
-            .filter_map(|(transform, iid)| {
-                let ldtk_project = ldtk_project_assets.get(ldtk_projects.single())?;
-                let level = ldtk_project.get_raw_level_by_iid(&iid.to_string())?;
-                let layer_info = level.layer_instances.as_ref()?.get(COLLISIONS_LAYER)?;
-                level_selection
-                    .is_match(&LevelIndices::default(), level)
-                    .then_some((transform, layer_info))
-            })
-            .for_each(|(level_transform, layer_info)| {
-                let translation =
-                    player_transform.translation.xy() - level_transform.translation.xy();
-                let character_coord =
-                    translation_to_grid_coords(translation, IVec2::splat(layer_info.grid_size));
-                info!("player coords: {character_coord:?}");
-            });
+    if let Ok(ldtk_project) = ldtk_projects.single() {
+        if let Ok(player_transform) = players.single() {
+            level_query
+                .iter()
+                .filter_map(|(transform, iid)| {
+                    let ldtk_project = ldtk_project_assets.get(ldtk_project)?;
+                    let level = ldtk_project.get_raw_level_by_iid(&iid.to_string())?;
+                    let layer_info = level.layer_instances.as_ref()?.get(COLLISIONS_LAYER)?;
+                    level_selection
+                        .is_match(&LevelIndices::default(), level)
+                        .then_some((transform, layer_info))
+                })
+                .for_each(|(level_transform, layer_info)| {
+                    let translation =
+                        player_transform.translation.xy() - level_transform.translation.xy();
+                    let character_coord =
+                        translation_to_grid_coords(translation, IVec2::splat(layer_info.grid_size));
+                    info!("player coords: {character_coord:?}");
+                });
+        }
     }
 }
 
