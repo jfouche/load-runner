@@ -1,4 +1,5 @@
 use crate::{
+    asset_tracking::LoadResource,
     components::{
         item::{Chest, ItemAssets, Items},
         player::Player,
@@ -12,7 +13,7 @@ use bevy_rapier2d::prelude::*;
 
 pub fn item_plugin(app: &mut App) {
     app.register_type::<Items>()
-        .init_resource::<ItemAssets>()
+        .load_resource::<ItemAssets>()
         .add_systems(Update, open_chest.in_set(InGameSet::CollisionDetection));
 }
 

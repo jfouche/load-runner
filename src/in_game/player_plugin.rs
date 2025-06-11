@@ -1,4 +1,5 @@
 use crate::{
+    asset_tracking::LoadResource,
     components::{
         character::{
             AnimationTimer, Climber, Damage, Dying, GroundDetection, GroundSensor,
@@ -21,7 +22,7 @@ use bevy_rapier2d::prelude::*;
 use std::time::Duration;
 
 pub fn player_plugin(app: &mut App) {
-    app.init_resource::<PlayerAssets>()
+    app.load_resource::<PlayerAssets>()
         .add_systems(Update, movement.in_set(InGameSet::UserInput))
         .add_systems(
             Update,

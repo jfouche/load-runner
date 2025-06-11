@@ -46,11 +46,7 @@ impl Life {
     }
 
     pub fn hit(&mut self, damage: u16) {
-        if damage > self.current {
-            self.current = 0;
-        } else {
-            self.current -= damage;
-        }
+        self.current = self.current.saturating_sub(damage);
     }
 
     pub fn is_dead(&self) -> bool {

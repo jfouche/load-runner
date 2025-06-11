@@ -10,7 +10,7 @@ use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 /// All [Player] assets
-#[derive(Resource)]
+#[derive(Resource, Clone, Asset, TypePath)]
 pub struct PlayerAssets {
     pub walk_sprites: Handle<Image>,
     pub walk_atlas_layout: Handle<TextureAtlasLayout>,

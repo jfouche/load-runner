@@ -89,10 +89,13 @@ fn spawn_level(
         Err(QuerySingleError::NoEntities(_)) => {
             // Spawn a new project
             let ldtk_handle = asset_server.load("load-runner.ldtk");
-            commands.spawn(LdtkWorldBundle {
-                ldtk_handle: ldtk_handle.into(),
-                ..Default::default()
-            });
+            commands.spawn((
+                LdtkWorldBundle {
+                    ldtk_handle: ldtk_handle.into(),
+                    ..Default::default()
+                },
+                Name::new("MapWorld"),
+            ));
         }
         Err(e) => panic!("{e:?}"),
     }

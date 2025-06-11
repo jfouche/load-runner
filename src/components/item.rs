@@ -107,7 +107,7 @@ impl Default for ChestBundle {
     }
 }
 
-#[derive(Resource)]
+#[derive(Resource, Clone, Asset, TypePath)]
 pub struct ItemAssets {
     pub texture: Handle<Image>,
     pub texture_atlas_layout: Handle<TextureAtlasLayout>,
