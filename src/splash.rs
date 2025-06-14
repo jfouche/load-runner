@@ -59,6 +59,7 @@ fn spawn_splash_screen(mut commands: Commands) {
 //     }
 // }
 
+#[allow(clippy::collapsible_if)]
 fn goto_main_menu(
     mut game_state: ResMut<NextState<GameState>>,
     keys: Res<ButtonInput<KeyCode>>,

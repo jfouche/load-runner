@@ -3,21 +3,26 @@ use crate::{
     schedule::{InGameSet, InGameState},
 };
 use bevy::prelude::*;
+use bevy_ecs_ldtk::prelude::*;
 
 pub fn camera_plugin(app: &mut App) {
     app.add_systems(Startup, spawn_camera)
         .add_systems(
             Update,
-            camera_follow_player.run_if(in_state(InGameState::LoadLevel)),
+            (camera_fit_inside_current_level).run_if(in_state(InGameState::LevelLoaded)),
         )
         .add_systems(
             Update,
-            (camera_follow_player).in_set(InGameSet::EntityUpdate),
+            (camera_fit_inside_current_level).in_set(InGameSet::EntityUpdate),
+        )
+        .add_systems(
+            Update,
+            (camera_fit_inside_current_level).in_set(InGameSet::EntityUpdate),
         );
 }
 
-// const ASPECT_RATIO: f32 = 16. / 9.;
-const CAM_LERP_FACTOR: f32 = 2.;
+const ASPECT_RATIO: f32 = 16. / 9.;
+// const CAM_LERP_FACTOR: f32 = 2.;
 
 fn spawn_camera(mut commands: Commands) {
     let projection = OrthographicProjection::default_2d();
@@ -28,93 +33,57 @@ fn spawn_camera(mut commands: Commands) {
     ));
 }
 
-// fn camera_fit_inside_current_level(
-//     mut camera_query: Query<
-//         (
-//             &mut bevy::render::camera::OrthographicProjection,
-//             &mut Transform,
-//         ),
-//         Without<Player>,
-//     >,
-//     player_query: Query<&Transform, With<Player>>,
-//     level_query: Query<(&Transform, &LevelIid), (Without<OrthographicProjection>, Without<Player>)>,
-//     ldtk_projects: Query<&Handle<LdtkProject>>,
-//     level_selection: Res<LevelSelection>,
-//     ldtk_project_assets: Res<Assets<LdtkProject>>,
-// ) {
-//     let Ok(Transform {
-//         translation: player_translation,
-//         ..
-//     }) = player_query.get_single()
-//     else {
-//         return;
-//     };
+fn camera_fit_inside_current_level(
+    mut cameras: Query<(&mut Projection, &mut Transform), (With<Camera2d>, Without<Player>)>,
+    players: Query<&Transform, With<Player>>,
+    level_query: Query<(&Transform, &LevelIid), (Without<Camera2d>, Without<Player>)>,
+    ldtk_projects: Query<&LdtkProjectHandle>,
+    level_selection: Res<LevelSelection>,
+    ldtk_project_assets: Res<Assets<LdtkProject>>,
+) -> Result {
+    let player_transform = players.single()?;
+    let player_translation = player_transform.translation;
 
-//     let ldtk_project = ldtk_project_assets
-//         .get(ldtk_projects.single())
-//         .expect("Project should be loaded if level has spawned");
-
-//     let Some((level_transform, level)) =
-//         level_query.iter().find_map(|(level_transform, level_iid)| {
-//             let level = ldtk_project.get_raw_level_by_iid(&level_iid.to_string())?;
-//             level_selection
-//                 .is_match(&LevelIndices::default(), level)
-//                 .then_some((level_transform, level))
-//         })
-//     else {
-//         return;
-//     };
-
-//     let (mut orthographic_projection, mut camera_transform) = camera_query.single_mut();
-//     let level_ratio = level.px_wid as f32 / level.px_hei as f32;
-//     orthographic_projection.viewport_origin = Vec2::ZERO;
-//     if level_ratio > ASPECT_RATIO {
-//         // level is wider than the screen
-//         let height = (level.px_hei as f32 / 9.).round() * 9.;
-//         let width = height * ASPECT_RATIO;
-//         orthographic_projection.scaling_mode =
-//             bevy::render::camera::ScalingMode::Fixed { width, height };
-//         camera_transform.translation.x =
-//             (player_translation.x - level_transform.translation.x - width / 2.)
-//                 .clamp(0., level.px_wid as f32 - width);
-//         camera_transform.translation.y = 0.;
-//     } else {
-//         // level is taller than the screen
-//         let width = (level.px_wid as f32 / 16.).round() * 16.;
-//         let height = width / ASPECT_RATIO;
-//         orthographic_projection.scaling_mode =
-//             bevy::render::camera::ScalingMode::Fixed { width, height };
-//         camera_transform.translation.y =
-//             (player_translation.y - level_transform.translation.y - height / 2.)
-//                 .clamp(0., level.px_hei as f32 - height);
-//         camera_transform.translation.x = 0.;
-//     }
-
-//     camera_transform.translation.x += level_transform.translation.x;
-//     camera_transform.translation.y += level_transform.translation.y;
-// }
-
-fn camera_follow_player(
-    mut camera: Query<&mut Transform, (With<Camera2d>, Without<Player>)>,
-    player: Query<&Transform, (With<Player>, Without<Camera2d>)>,
-    time: Res<Time>,
-) {
-    let Ok(mut camera) = camera.single_mut() else {
-        return;
+    let (mut projection, mut camera_transform) = cameras.single_mut()?;
+    let Projection::Orthographic(ref mut orthographic_projection) = &mut *projection else {
+        return Err(BevyError::from("non-orthographic projection found"));
     };
-    let Ok(player) = player.single() else {
-        return;
-    };
+    let ldtk_project = ldtk_project_assets
+        .get(ldtk_projects.single()?)
+        .expect("Project should be loaded if level has spawned");
 
-    let Vec3 { x, y, .. } = player.translation;
-    let direction = Vec3::new(x, y, camera.translation.z);
+    for (level_transform, level_iid) in &level_query {
+        let level = ldtk_project
+            .get_raw_level_by_iid(&level_iid.to_string())
+            .expect("Spawned level should exist in LDtk project");
+        if level_selection.is_match(&LevelIndices::default(), level) {
+            let level_ratio = level.px_wid as f32 / level.px_hei as f32;
+            orthographic_projection.viewport_origin = Vec2::ZERO;
+            if level_ratio > ASPECT_RATIO {
+                // level is wider than the screen
+                let height = (level.px_hei as f32 / 9.).round() * 9.;
+                let width = height * ASPECT_RATIO;
+                orthographic_projection.scaling_mode =
+                    bevy::render::camera::ScalingMode::Fixed { width, height };
+                camera_transform.translation.x =
+                    (player_translation.x - level_transform.translation.x - width / 2.)
+                        .clamp(0., level.px_wid as f32 - width);
+                camera_transform.translation.y = 0.;
+            } else {
+                // level is taller than the screen
+                let width = (level.px_wid as f32 / 16.).round() * 16.;
+                let height = width / ASPECT_RATIO;
+                orthographic_projection.scaling_mode =
+                    bevy::render::camera::ScalingMode::Fixed { width, height };
+                camera_transform.translation.y =
+                    (player_translation.y - level_transform.translation.y - height / 2.)
+                        .clamp(0., level.px_hei as f32 - height);
+                camera_transform.translation.x = 0.;
+            }
 
-    // Applies a smooth effect to camera movement using interpolation between
-    // the camera position and the player position on the x and y axes.
-    // Here we use the in-game time, to get the elapsed time (in seconds)
-    // since the previous update. This avoids jittery movement when tracking
-    // the player.
-    camera.translation = camera
-        .translation
-        .lerp(direction, time.delta_secs() * CAM_LERP_FACTOR);
+            camera_transform.translation.x += level_transform.translation.x;
+            camera_transform.translation.y += level_transform.translation.y;
+        }
+    }
+    Ok(())
 }

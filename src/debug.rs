@@ -81,6 +81,7 @@ fn inspector_ui(world: &mut World) {
     });
 }
 
+#[allow(clippy::match_like_matches_macro)]
 fn toggle_grab(
     mut primary_window: Query<&mut Window, With<PrimaryWindow>>,
     keys: Res<ButtonInput<KeyCode>>,

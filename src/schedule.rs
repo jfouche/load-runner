@@ -1,12 +1,6 @@
 use bevy::prelude::*;
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, SystemSet)]
-pub enum InGameLoadingSet {
-    CreateLevel,
-    SpawnLevelEntities,
-}
-
-#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, SystemSet)]
 pub enum InGameSet {
     UserInput,
     EntityUpdate,
@@ -28,26 +22,19 @@ pub enum GameState {
 pub enum InGameState {
     #[default]
     Disabled,
+    LevelLoading,
+    LevelLoaded,
     Running,
     Pause,
     PlayerEndedLevel,
     PlayerDied,
     ShowPopup,
-    LoadLevel,
 }
 
 pub fn schedule_plugin(app: &mut App) {
     app.init_state::<GameState>()
         .init_state::<InGameState>()
-        .configure_sets(
-            OnEnter(InGameState::LoadLevel),
-            (
-                InGameLoadingSet::CreateLevel,
-                // apply_deffer will be added here
-                InGameLoadingSet::SpawnLevelEntities,
-            )
-                .chain(),
-        )
+        .enable_state_scoped_entities::<InGameState>()
         .configure_sets(
             Update,
             (
@@ -59,12 +46,6 @@ pub fn schedule_plugin(app: &mut App) {
             )
                 .chain()
                 .run_if(game_is_running),
-        )
-        .add_systems(
-            OnEnter(GameState::InGame),
-            ApplyDeferred
-                .after(InGameLoadingSet::CreateLevel)
-                .before(InGameLoadingSet::SpawnLevelEntities),
         )
         .add_systems(
             Update,
@@ -88,7 +69,7 @@ fn new_game(
     mut in_game_state: ResMut<NextState<InGameState>>,
 ) {
     // **current_level = 0;
-    in_game_state.set(InGameState::LoadLevel);
+    in_game_state.set(InGameState::LevelLoading);
 }
 
 fn end_game(mut in_game_state: ResMut<NextState<InGameState>>) {

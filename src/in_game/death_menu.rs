@@ -1,5 +1,5 @@
 use crate::{
-    components::{despawn_all, player::PlayerDeathEvent},
+    components::player::PlayerDeathEvent,
     cursor::ungrab_cursor,
     schedule::{GameState, InGameState},
     theme::widget,
@@ -14,7 +14,6 @@ pub fn plugin(app: &mut App) {
         OnEnter(InGameState::PlayerDied),
         (ungrab_cursor, spawn_death_menu),
     )
-    .add_systems(OnExit(InGameState::PlayerDied), despawn_all::<DeathMenu>)
     .add_systems(
         Update,
         back_to_menu
@@ -39,7 +38,7 @@ fn death_menu() -> impl Bundle {
 }
 
 fn spawn_death_menu(mut commands: Commands) {
-    commands.spawn(death_menu());
+    commands.spawn((death_menu(), StateScoped(InGameState::PlayerDied)));
 }
 
 fn on_player_death(

@@ -16,15 +16,16 @@ pub fn character_plugin(app: &mut App) {
         .add_systems(
             Update,
             (
-                detect_climb_range,
+                update_on_ground,
+                update_in_water,
+                update_jumping,
                 ignore_gravity_if_climbing,
-                (ground_detection, update_on_ground).chain(),
             )
-                .in_set(InGameSet::CollisionDetection),
+                .in_set(InGameSet::EntityUpdate),
         )
         .add_systems(
             Update,
-            (update_on_ground, update_in_water, update_jumping).in_set(InGameSet::EntityUpdate),
+            (detect_climb_range, ground_detection).in_set(InGameSet::CollisionDetection),
         );
 }
 
@@ -35,27 +36,27 @@ fn detect_climb_range(
 ) {
     for collision in collisions.read() {
         match collision {
-            CollisionEvent::Started(collider_a, collider_b, _) => {
+            CollisionEvent::Started(e1, e2, _) => {
                 if let (Ok(mut climber), Ok(climbable)) =
-                    (climbers.get_mut(*collider_a), climbables.get(*collider_b))
+                    (climbers.get_mut(*e1), climbables.get(*e2))
                 {
                     climber.intersecting_climbables.insert(climbable);
                 }
                 if let (Ok(mut climber), Ok(climbable)) =
-                    (climbers.get_mut(*collider_b), climbables.get(*collider_a))
+                    (climbers.get_mut(*e2), climbables.get(*e1))
                 {
                     climber.intersecting_climbables.insert(climbable);
-                };
+                }
             }
-            CollisionEvent::Stopped(collider_a, collider_b, _) => {
+            CollisionEvent::Stopped(e1, e2, _) => {
                 if let (Ok(mut climber), Ok(climbable)) =
-                    (climbers.get_mut(*collider_a), climbables.get(*collider_b))
+                    (climbers.get_mut(*e1), climbables.get(*e2))
                 {
                     climber.intersecting_climbables.remove(&climbable);
                 }
 
                 if let (Ok(mut climber), Ok(climbable)) =
-                    (climbers.get_mut(*collider_b), climbables.get(*collider_a))
+                    (climbers.get_mut(*e2), climbables.get(*e1))
                 {
                     climber.intersecting_climbables.remove(&climbable);
                 }

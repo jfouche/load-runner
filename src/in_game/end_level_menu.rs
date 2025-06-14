@@ -1,16 +1,11 @@
 use crate::{
-    components::despawn_all,
     schedule::{GameState, InGameState},
     theme::widget,
 };
 use bevy::prelude::*;
 
 pub fn end_level_menu_plugin(app: &mut App) {
-    app.add_systems(OnEnter(InGameState::PlayerEndedLevel), spawn_menu)
-        .add_systems(
-            OnExit(InGameState::PlayerEndedLevel),
-            despawn_all::<EndLevelMenu>,
-        );
+    app.add_systems(OnEnter(InGameState::PlayerEndedLevel), spawn_menu);
 }
 
 #[derive(Component)]
@@ -26,7 +21,7 @@ fn end_level_menu() -> impl Bundle {
 }
 
 fn spawn_menu(mut commands: Commands) {
-    commands.spawn(end_level_menu());
+    commands.spawn((end_level_menu(), StateScoped(InGameState::PlayerEndedLevel)));
 }
 
 fn on_quit_game(

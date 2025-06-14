@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::{
     components::{
         enemy::MobBundle,
@@ -11,6 +13,7 @@ use crate::{
     },
     in_game::popup_with_images::popup_with_images,
     schedule::{GameState, InGameSet, InGameState},
+    theme::widget,
     ui::fade::{fader, FaderFinishEvent},
     utils::collisions::{start_event_filter, QueryEither},
 };
@@ -37,8 +40,17 @@ pub fn level_plugin(app: &mut App) {
         .register_ldtk_entity::<ChestBundle>("Chest")
         .register_ldtk_entity::<DoorBundle>("Door")
         .register_ldtk_entity::<EndLevelBundle>("End")
-        // LoadLevel
-        .add_systems(OnEnter(InGameState::LoadLevel), (show_level, spawn_level))
+        // LevelLoading
+        .add_systems(
+            OnEnter(InGameState::LevelLoading),
+            (spawn_loading_screen, spawn_level),
+        )
+        .add_systems(
+            Update,
+            wait_for_end_of_level_loading.run_if(in_state(InGameState::LevelLoading)),
+        )
+        // LevelLoading
+        .add_systems(OnEnter(InGameState::LevelLoaded), show_level)
         .add_systems(
             Update,
             spawn_wall_collision.run_if(in_state(GameState::InGame)),
@@ -46,31 +58,44 @@ pub fn level_plugin(app: &mut App) {
         // InGame
         .add_systems(
             Update,
-            update_level_selection.in_set(InGameSet::EntityUpdate),
+            update_level_based_on_player_pos.in_set(InGameSet::EntityUpdate),
         )
         .add_systems(
             Update,
             (open_door, end_level).in_set(InGameSet::CollisionDetection),
         )
         .add_systems(Update, restart_level.in_set(InGameSet::UserInput))
-        .add_observer(start_level_after_fading);
+        .add_observer(run_level_after_fading);
 }
 
-const END_LEVEL_FADE_COLOR: Color = Color::srgba(0.0, 0.0, 0.8, 1.0);
+#[derive(Component)]
+struct LoadingScreen;
+
+fn loading_screen() -> impl Bundle {
+    (
+        LoadingScreen,
+        widget::ui_root("LoadingScreen"),
+        BackgroundColor(LOADING_SCREEN_BACKGROUND_COLOR),
+    )
+}
+
+const LOADING_SCREEN_BACKGROUND_COLOR: Color = Color::srgba(0.0, 0.0, 0.8, 1.0);
+
+fn spawn_loading_screen(mut commands: Commands) {
+    commands.spawn((loading_screen(), StateScoped(InGameState::LevelLoading)));
+}
 
 fn show_level(mut commands: Commands) {
-    info!("show_level()");
-    commands.spawn(fader(END_LEVEL_FADE_COLOR, Color::NONE, 2.0));
+    commands.spawn(fader(LOADING_SCREEN_BACKGROUND_COLOR, Color::NONE, 2.0));
 }
 
 /// wait for fader to finish, and start running
-fn start_level_after_fading(
+fn run_level_after_fading(
     trigger: Trigger<FaderFinishEvent>,
     mut commands: Commands,
     mut in_game_state: ResMut<NextState<InGameState>>,
 ) {
     if let Ok(mut fader) = commands.get_entity(trigger.target()) {
-        info!("start_level() - despawn({:?})", trigger.target());
         fader.despawn();
     }
     in_game_state.set(InGameState::Running);
@@ -98,6 +123,31 @@ fn spawn_level(
             ));
         }
         Err(e) => panic!("{e:?}"),
+    }
+}
+
+/// Wait for all [LevelEvent::Spawned] required by all [LevelEvent::SpawnTriggered]
+/// and set in the [InGameState::LevelLoaded].
+fn wait_for_end_of_level_loading(
+    mut events: EventReader<LevelEvent>,
+    mut in_game_state: ResMut<NextState<InGameState>>,
+    mut progress: Local<HashSet<LevelIid>>,
+) {
+    for event in events.read() {
+        match event {
+            LevelEvent::SpawnTriggered(liid) => {
+                info!("LevelEvent::SpawnTriggered({liid})");
+                progress.insert(liid.clone());
+            }
+            LevelEvent::Spawned(liid) => {
+                info!("LevelEvent::Spawned({liid})");
+                progress.remove(liid);
+                if progress.is_empty() {
+                    in_game_state.set(InGameState::LevelLoaded);
+                }
+            }
+            _ => {}
+        }
     }
 }
 
@@ -166,39 +216,42 @@ fn spawn_wall_collision(
     }
 }
 
-fn update_level_selection(
+fn update_level_based_on_player_pos(
     level_query: Query<(&LevelIid, &Transform), Without<Player>>,
     player_query: Query<&Transform, With<Player>>,
     mut level_selection: ResMut<LevelSelection>,
     ldtk_projects: Query<&LdtkProjectHandle>,
     ldtk_project_assets: Res<Assets<LdtkProject>>,
 ) {
-    if let Ok(ldtk_project) = ldtk_projects.single() {
-        let ldtk_project = ldtk_project_assets
-            .get(ldtk_project)
-            .expect("Project should be loaded if level has spawned");
+    let Ok(ldtk_project) = ldtk_projects.single() else {
+        error!("Project not loaded");
+        return;
+    };
 
-        for (level_iid, level_transform) in &level_query {
-            let level = ldtk_project
-                .get_raw_level_by_iid(&level_iid.to_string())
-                .expect("Spawned level should exist in LDtk project");
-            let level_bounds = Rect {
-                min: Vec2::new(level_transform.translation.x, level_transform.translation.y),
-                max: Vec2::new(
-                    level_transform.translation.x + level.px_wid as f32,
-                    level_transform.translation.y + level.px_hei as f32,
-                ),
-            };
+    let ldtk_project = ldtk_project_assets
+        .get(ldtk_project)
+        .expect("Project should be loaded if level has spawned");
 
-            for player_transform in &player_query {
-                if player_transform.translation.x < level_bounds.max.x
-                    && player_transform.translation.x > level_bounds.min.x
-                    && player_transform.translation.y < level_bounds.max.y
-                    && player_transform.translation.y > level_bounds.min.y
-                    && !level_selection.is_match(&LevelIndices::default(), level)
-                {
-                    *level_selection = LevelSelection::iid(level.iid.clone());
-                }
+    for (level_iid, level_transform) in &level_query {
+        let level = ldtk_project
+            .get_raw_level_by_iid(&level_iid.to_string())
+            .expect("Spawned level should exist in LDtk project");
+        let level_bounds = Rect {
+            min: Vec2::new(level_transform.translation.x, level_transform.translation.y),
+            max: Vec2::new(
+                level_transform.translation.x + level.px_wid as f32,
+                level_transform.translation.y + level.px_hei as f32,
+            ),
+        };
+
+        for player_transform in &player_query {
+            if player_transform.translation.x < level_bounds.max.x
+                && player_transform.translation.x > level_bounds.min.x
+                && player_transform.translation.y < level_bounds.max.y
+                && player_transform.translation.y > level_bounds.min.y
+                && !level_selection.is_match(&LevelIndices::default(), level)
+            {
+                *level_selection = LevelSelection::iid(level.iid.clone());
             }
         }
     }
