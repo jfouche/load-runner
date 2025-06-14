@@ -226,7 +226,6 @@ impl LevelColliders {
                         // remove the finished rect so that the same plate in the future starts a new rect
                         if let Some(rect) = rect_builder.remove(prev_plate) {
                             colliders.push(WallColliderBundle::new(rect, grid_size));
-                            // wall_rects.push(rect);
                         }
                     }
                 }

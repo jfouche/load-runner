@@ -118,12 +118,12 @@ impl GroundSensorCollider {
     }
 }
 
-#[derive(Clone, Default, Component, Debug)]
+#[derive(Clone, Default, Component, Debug, Reflect)]
 pub struct GroundDetection {
     pub on_ground: bool,
 }
 
-#[derive(Clone, Eq, PartialEq, Debug, Default, Component)]
+#[derive(Component, Default, Clone, Eq, PartialEq, Debug, Reflect)]
 pub struct Climber {
     pub climbing: bool,
     pub intersecting_climbables: HashSet<Entity>,

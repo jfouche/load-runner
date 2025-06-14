@@ -1,6 +1,8 @@
 use crate::{
     components::{
-        character::{Climber, GroundDetection, GroundSensor, InWater, Jumping, Life, Speed},
+        character::{
+            Climber, GroundDetection, GroundSensor, InWater, JumpSpeed, Jumping, Life, Speed,
+        },
         level::{Climbable, Wall, Water, COLLISIONS_LAYER},
     },
     schedule::InGameSet,
@@ -13,6 +15,9 @@ pub fn character_plugin(app: &mut App) {
     app.register_type::<Life>()
         .register_type::<Speed>()
         .register_type::<InWater>()
+        .register_type::<Jumping>()
+        .register_type::<Climber>()
+        .register_type::<JumpSpeed>()
         .add_systems(
             Update,
             (
@@ -121,7 +126,7 @@ fn update_on_ground(
                     .iter()
                     .any(|e| walls.get(*e).is_ok());
 
-            warn!("update_on_ground : {}", ground_detection.on_ground);
+            info!("update_on_ground : {}", ground_detection.on_ground);
         }
     }
 }

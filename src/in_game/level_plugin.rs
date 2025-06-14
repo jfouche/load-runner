@@ -163,98 +163,85 @@ fn spawn_wall_collision(
     mut commands: Commands,
     wall_query: Query<(&GridCoords, &ChildOf), Added<Wall>>,
     parents: Query<&ChildOf, Without<Wall>>,
-    level_query: Query<(Entity, &LevelIid)>,
+    levels: Query<(Entity, &LevelIid)>,
     ldtk_projects: Query<&LdtkProjectHandle>,
     ldtk_project_assets: Res<Assets<LdtkProject>>,
-) {
-    let Ok(ldtk_project) = ldtk_projects.single() else {
-        return;
-    };
+) -> Result {
+    if wall_query.is_empty() {
+        return Ok(());
+    }
+
+    let ldtk_project = ldtk_project_assets
+        .get(ldtk_projects.single()?)
+        .ok_or("Project should be loaded if level has spawned")?
+        .as_standalone();
 
     let mut level_colliders = LevelColliders::new();
     wall_query
         .iter()
-        .for_each(|(&grid_coords, &ChildOf(parent))| {
-            // An intgrid tile's direct parent will be a layer entity, not the level entity
-            // To get the level entity, you need the tile's grandparent.
-            // This is where parent_query comes in.
-            if let Ok(&ChildOf(grandparent)) = parents.get(parent) {
-                level_colliders.add_coord(grandparent, grid_coords);
-            }
+        // An intgrid tile's direct parent will be a layer entity, not the level entity
+        // To get the level entity, you need the tile's grandparent.
+        // This is where parent_query comes in.
+        .filter_map(|(grid_coords, &ChildOf(parent))| {
+            let ChildOf(level_entity) = parents.get(parent).ok()?;
+            Some((level_entity, grid_coords))
+        })
+        .for_each(|(&level_entity, &grid_coords)| {
+            level_colliders.add_coord(level_entity, grid_coords);
         });
 
-    if !wall_query.is_empty() {
-        let ldtk_project = ldtk_project_assets
-            .get(ldtk_project)
-            .expect("Project should be loaded if level has spawned");
+    for (level_entity, level_iid) in &levels {
+        let level = ldtk_project
+            .get_loaded_level_by_iid(&level_iid.to_string())
+            .ok_or("Spawned level should exist in LDtk project")?;
 
-        for (level_entity, level_iid) in &level_query {
-            let level = ldtk_project
-                .as_standalone()
-                .get_loaded_level_by_iid(&level_iid.to_string())
-                .expect("Spawned level should exist in LDtk project");
+        let LayerInstance {
+            c_wid: width,
+            c_hei: height,
+            grid_size,
+            ..
+        } = level.layer_instances()[COLLISIONS_LAYER];
 
-            let LayerInstance {
-                c_wid: width,
-                c_hei: height,
-                grid_size,
-                ..
-            } = level.layer_instances()[COLLISIONS_LAYER];
+        let colliders = level_colliders.combine(&level_entity, width, height, grid_size);
 
-            let colliders = level_colliders.combine(&level_entity, width, height, grid_size);
-
-            commands.entity(level_entity).with_children(|level| {
-                // Spawn colliders for every rectangle..
-                // Making the collider a child of the level serves two purposes:
-                // 1. Adjusts the transforms to be relative to the level for free
-                // 2. the colliders will be despawned automatically when levels unload
-                for collider in colliders {
-                    level.spawn(collider);
-                }
-            });
+        // Spawn colliders for every rectangle..
+        // Making the collider a child of the level serves two purposes:
+        // 1. Adjusts the transforms to be relative to the level for free
+        // 2. the colliders will be despawned automatically when levels unload
+        for collider in colliders {
+            commands.spawn((collider, ChildOf(level_entity)));
         }
     }
+    Ok(())
 }
 
 fn update_level_based_on_player_pos(
-    level_query: Query<(&LevelIid, &Transform), Without<Player>>,
-    player_query: Query<&Transform, With<Player>>,
-    mut level_selection: ResMut<LevelSelection>,
+    levels: Query<(&LevelIid, &Transform), Without<Player>>,
+    players: Query<&Transform, With<Player>>,
     ldtk_projects: Query<&LdtkProjectHandle>,
+    mut level_selection: ResMut<LevelSelection>,
     ldtk_project_assets: Res<Assets<LdtkProject>>,
-) {
-    let Ok(ldtk_project) = ldtk_projects.single() else {
-        error!("Project not loaded");
-        return;
-    };
-
+) -> Result {
     let ldtk_project = ldtk_project_assets
-        .get(ldtk_project)
-        .expect("Project should be loaded if level has spawned");
+        .get(ldtk_projects.single()?)
+        .ok_or("Project should be loaded if level has spawned")?;
 
-    for (level_iid, level_transform) in &level_query {
-        let level = ldtk_project
-            .get_raw_level_by_iid(&level_iid.to_string())
-            .expect("Spawned level should exist in LDtk project");
-        let level_bounds = Rect {
-            min: Vec2::new(level_transform.translation.x, level_transform.translation.y),
-            max: Vec2::new(
-                level_transform.translation.x + level.px_wid as f32,
-                level_transform.translation.y + level.px_hei as f32,
-            ),
-        };
+    let player_pos = players.single()?.translation.xy();
 
-        for player_transform in &player_query {
-            if player_transform.translation.x < level_bounds.max.x
-                && player_transform.translation.x > level_bounds.min.x
-                && player_transform.translation.y < level_bounds.max.y
-                && player_transform.translation.y > level_bounds.min.y
-                && !level_selection.is_match(&LevelIndices::default(), level)
-            {
-                *level_selection = LevelSelection::iid(level.iid.clone());
-            }
-        }
-    }
+    levels
+        .iter()
+        // Get level bounds
+        .filter_map(|(liid, transform)| {
+            let level = ldtk_project.get_raw_level_by_iid(&liid.to_string())?;
+            let min = transform.translation.xy();
+            let max = min + vec2(level.px_wid as f32, level.px_hei as f32);
+            Some((level, Rect { min, max }))
+        })
+        // Check if player is in level
+        .filter_map(|(level, level_bounds)| level_bounds.contains(player_pos).then_some(level))
+        // Select level
+        .for_each(|level| *level_selection = LevelSelection::iid(level.iid.clone()));
+    Ok(())
 }
 
 fn restart_level(
