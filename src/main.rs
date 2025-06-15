@@ -41,6 +41,7 @@ fn main() {
             utils::blink::BlinkPlugin,
             utils::invulnerable::InvulnerabilityPlugin,
             utils::despawn_after::despawn_after_plugin,
+            theme::theme_plugin,
         ))
         .add_plugins((
             asset_tracking::asset_tracking_plugin,

@@ -16,7 +16,7 @@ fn end_level_menu() -> impl Bundle {
         EndLevelMenu,
         Name::new("EndLevelMenu"),
         widget::centered(),
-        children![widget::button("Quit game", on_quit_game)],
+        children![widget::menu_button("Quit game", on_quit_game)],
     )
 }
 

@@ -1,10 +1,9 @@
-use crate::asset_tracking::LoadResource;
 use bevy::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<InteractionPalette>()
-        .register_type::<InteractionAssets>()
-        .load_resource::<InteractionAssets>()
+        // .register_type::<InteractionAssets>()
+        // .load_resource::<InteractionAssets>()
         .add_systems(Update, apply_interaction_palette)
         // .add_observer(play_on_hover_sound_effect)
         // .add_observer(play_on_click_sound_effect)

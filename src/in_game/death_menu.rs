@@ -32,7 +32,7 @@ fn death_menu() -> impl Bundle {
         widget::popup(),
         children![
             widget::popup_title("You died !"),
-            widget::button("Back to menu", on_back_to_menu)
+            widget::menu_button("Back to menu", on_back_to_menu)
         ],
     )
 }

@@ -5,6 +5,6 @@ pub mod interaction;
 pub mod palette;
 pub mod widget;
 
-pub fn theme_plugin(_app: &mut bevy::app::App) {
-    // app.add_plugins(interaction::plugin);
+pub fn theme_plugin(app: &mut bevy::app::App) {
+    app.add_plugins(interaction::plugin);
 }

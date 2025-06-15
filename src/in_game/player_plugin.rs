@@ -289,27 +289,27 @@ fn enemy_hit_player(
     mut collisions: EventReader<CollisionEvent>,
     mut players: Query<(Entity, &mut Life), With<Player>>,
     enemies: Query<&Damage, With<Enemy>>,
-) {
-    if let Ok((player_entity, mut life)) = players.single_mut() {
-        if let Some(damage) = collisions
-            .read()
-            .filter_map(start_event_filter)
-            .filter_map(|(&e1, &e2)| enemies.get_either(e1, e2))
-            .filter(|(_damage, _enemy_entity, other_entity)| *other_entity == player_entity)
-            .map(|(damage, _enemy_entity, _player_entity)| damage)
-            .next()
-        {
-            life.hit(damage.0);
-            if life.is_dead() {
-                commands.entity(player_entity).insert(Dying);
-            } else {
-                // Make player invulnerable
-                commands
-                    .entity(player_entity)
-                    .insert(Invulnerable::new(Duration::from_secs_f32(2.0), GROUP_ENEMY));
-            }
+) -> Result {
+    let (player_entity, mut life) = players.single_mut()?;
+    if let Some(damage) = collisions
+        .read()
+        .filter_map(start_event_filter)
+        .filter_map(|(&e1, &e2)| enemies.get_either(e1, e2))
+        .filter(|(_damage, _enemy_entity, other_entity)| *other_entity == player_entity)
+        .map(|(damage, _enemy_entity, _player_entity)| damage)
+        .next()
+    {
+        life.hit(damage.0);
+        if life.is_dead() {
+            commands.entity(player_entity).insert(Dying);
+        } else {
+            // Make player invulnerable
+            commands
+                .entity(player_entity)
+                .insert(Invulnerable::new(Duration::from_secs_f32(2.0), GROUP_ENEMY));
         }
     }
+    Ok(())
 }
 
 fn player_hits_enemy(

@@ -1,4 +1,8 @@
-use crate::{components::despawn_all, schedule::GameState, theme::widget};
+use crate::{
+    components::despawn_all,
+    schedule::GameState,
+    theme::{palette::MAIN_MENU_BACKGROUND, widget},
+};
 use bevy::{app::AppExit, color::palettes::css::GRAY, prelude::*};
 
 pub fn main_menu_plugin(app: &mut App) {
@@ -13,11 +17,12 @@ fn main_menu() -> impl Bundle {
     (
         MainMenu,
         widget::ui_root("MainMenu"),
+        BackgroundColor(MAIN_MENU_BACKGROUND),
         GlobalZIndex(2),
         children![
             widget::header("Load-Runner"),
-            widget::button("New game", on_new_game),
-            widget::button("Exit", on_exit),
+            widget::menu_button("New game", on_new_game),
+            widget::menu_button("Exit", on_exit),
         ],
     )
 }

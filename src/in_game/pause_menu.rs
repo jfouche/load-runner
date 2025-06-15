@@ -22,8 +22,8 @@ fn pause_menu() -> impl Bundle {
         widget::popup(),
         children![
             widget::popup_title("Pause"),
-            widget::button("Back to game", on_back_to_game),
-            widget::button("Quit game", on_quit_game)
+            widget::menu_button("Back to game", on_back_to_game),
+            widget::menu_button("Quit game", on_quit_game)
         ],
     )
 }

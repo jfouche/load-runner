@@ -6,7 +6,10 @@ use crate::{
     cursor::*,
     schedule::*,
 };
-use bevy::{prelude::*, time::common_conditions::on_timer, window::PrimaryWindow};
+use bevy::{
+    input::common_conditions::input_just_pressed, prelude::*, time::common_conditions::on_timer,
+    window::PrimaryWindow,
+};
 use bevy_ecs_ldtk::{
     prelude::*,
     utils::{translation_to_grid_coords, translation_to_ldtk_pixel_coords},
@@ -32,6 +35,10 @@ pub fn plugin(app: &mut App) {
     ))
     .insert_resource(DebugMode(true))
     .add_systems(EguiContextPass, inspector_ui.run_if(debug_is_active))
+    .add_systems(
+        Update,
+        toggle_debug_mode.run_if(input_just_pressed(KeyCode::KeyL)),
+    )
     .add_systems(
         Update,
         (toggle_grab, display_player_items).in_set(InGameSet::UserInput),
@@ -79,6 +86,10 @@ fn inspector_ui(world: &mut World) {
             ui.allocate_space(ui.available_size());
         });
     });
+}
+
+fn toggle_debug_mode(mut mode: ResMut<DebugMode>) {
+    **mode = !**mode;
 }
 
 #[allow(clippy::match_like_matches_macro)]
