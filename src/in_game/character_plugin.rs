@@ -116,15 +116,10 @@ fn ground_detection(
 fn update_on_ground(
     mut ground_detectors: Query<&mut GroundDetection>,
     ground_sensors: Query<&GroundSensor, Changed<GroundSensor>>,
-    walls: Query<(), With<Wall>>,
 ) {
     for sensor in &ground_sensors {
         if let Ok(mut ground_detection) = ground_detectors.get_mut(sensor.ground_detection_entity) {
-            ground_detection.on_ground = !sensor.intersecting_ground_entities.is_empty()
-                && !sensor
-                    .intersecting_ground_entities
-                    .iter()
-                    .any(|e| walls.get(*e).is_ok());
+            ground_detection.on_ground = !sensor.intersecting_ground_entities.is_empty();
 
             info!("update_on_ground : {}", ground_detection.on_ground);
         }
