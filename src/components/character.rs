@@ -26,16 +26,18 @@ impl Movement for Velocity {
 #[derive(Component, Clone, Copy, Default, Debug, Reflect)]
 pub struct Life {
     current: u16,
-    // max: u16,
 }
+
+const DEFAULT_LIFE: i32 = 5;
 
 impl From<&EntityInstance> for Life {
     fn from(entity_instance: &EntityInstance) -> Self {
         let life = entity_instance
             .get_int_field("life")
-            .expect("[life] field should be correctly typed");
+            .copied()
+            .unwrap_or(DEFAULT_LIFE);
         Life {
-            current: *life as u16,
+            current: life as u16,
         }
     }
 }
@@ -61,24 +63,30 @@ impl Life {
 #[derive(Component, Clone, Copy, Default, Debug, Deref, Reflect)]
 pub struct Speed(pub f32);
 
+const DEFAULT_SPEED: f32 = 120.;
+
 impl From<&EntityInstance> for Speed {
     fn from(entity_instance: &EntityInstance) -> Self {
         let speed = entity_instance
             .get_float_field("speed")
-            .expect("[speed] field should be correctly typed");
-        Speed(*speed)
+            .copied()
+            .unwrap_or(DEFAULT_SPEED);
+        Speed(speed)
     }
 }
 
 #[derive(Component, Clone, Copy, Default, Debug, Deref, Reflect)]
 pub struct JumpSpeed(pub f32);
 
+const DEFAULT_JUMP_SPEED: f32 = 180.;
+
 impl From<&EntityInstance> for JumpSpeed {
     fn from(entity_instance: &EntityInstance) -> Self {
         let speed = entity_instance
             .get_float_field("jump_speed")
-            .expect("[jump_speed] field should be correctly typed");
-        JumpSpeed(*speed)
+            .copied()
+            .unwrap_or(DEFAULT_JUMP_SPEED);
+        JumpSpeed(speed)
     }
 }
 
@@ -91,31 +99,21 @@ pub struct GroundSensor {
     pub intersecting_ground_entities: HashSet<Entity>,
 }
 
-#[derive(Bundle)]
-pub struct GroundSensorCollider {
-    name: Name,
-    events: ActiveEvents,
-    collider: Collider,
-    sensor: Sensor,
-    transform: Transform,
-    ground_sensor: GroundSensor,
-}
+pub fn ground_sensor(parent: Entity, half_extents: Vec2) -> impl Bundle {
+    let pos = Vec3::new(0., -half_extents.y + 1., 0.);
 
-impl GroundSensorCollider {
-    pub fn new(parent: Entity, half_extents: Vec2) -> Self {
-        let pos = Vec3::new(0., -half_extents.y + 1., 0.);
-        GroundSensorCollider {
-            name: Name::new("GroundSensor"),
-            events: ActiveEvents::COLLISION_EVENTS,
-            collider: Collider::cuboid(half_extents.x / 2.0, 1.),
-            sensor: Sensor,
-            transform: Transform::from_translation(pos),
-            ground_sensor: GroundSensor {
-                ground_detection_entity: parent,
-                intersecting_ground_entities: HashSet::new(),
-            },
-        }
-    }
+    (
+        Name::new("GroundSensor"),
+        GroundSensor {
+            ground_detection_entity: parent,
+            intersecting_ground_entities: HashSet::new(),
+        },
+        ChildOf(parent),
+        Transform::from_translation(pos),
+        Collider::cuboid(half_extents.x / 2.0, 1.),
+        ActiveEvents::COLLISION_EVENTS,
+        Sensor,
+    )
 }
 
 #[derive(Clone, Default, Component, Debug, Reflect)]

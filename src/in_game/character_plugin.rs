@@ -3,7 +3,7 @@ use crate::{
         character::{
             Climber, GroundDetection, GroundSensor, InWater, JumpSpeed, Jumping, Life, Speed,
         },
-        level::{Climbable, Wall, Water, COLLISIONS_LAYER},
+        level::{Climbable, Water, COLLISIONS_LAYER},
     },
     schedule::InGameSet,
 };

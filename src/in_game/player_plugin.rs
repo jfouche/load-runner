@@ -2,8 +2,8 @@ use crate::{
     asset_tracking::LoadResource,
     components::{
         character::{
-            AnimationTimer, Climber, Damage, Dying, GroundDetection, GroundSensor,
-            GroundSensorCollider, InWater, JumpSpeed, Jumping, Life, Movement, Speed,
+            ground_sensor, AnimationTimer, Climber, Damage, Dying, GroundDetection, GroundSensor,
+            InWater, JumpSpeed, Jumping, Life, Movement, Speed,
         },
         enemy::Enemy,
         item::{Item, Items},
@@ -56,10 +56,7 @@ fn init_player_sprite(
 
 /// Spawn a [Sensor] at the bottom of a collider to detect when it is on the ground
 fn spawn_ground_sensor(trigger: Trigger<OnAdd, GroundDetection>, mut commands: Commands) {
-    commands.spawn((
-        GroundSensorCollider::new(trigger.target(), Vec2::new(7.0, 8.0)),
-        ChildOf(trigger.target()),
-    ));
+    commands.spawn(ground_sensor(trigger.target(), Vec2::new(7.0, 8.0)));
 }
 
 fn next_sprite_index_option(indices: &[usize], current: usize) -> Option<usize> {
