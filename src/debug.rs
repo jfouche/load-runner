@@ -7,8 +7,8 @@ use crate::{
     schedule::*,
 };
 use bevy::{
-    input::common_conditions::input_just_pressed, prelude::*, time::common_conditions::on_timer,
-    window::PrimaryWindow,
+    dev_tools::fps_overlay::FpsOverlayPlugin, input::common_conditions::input_just_pressed,
+    prelude::*, time::common_conditions::on_timer, window::PrimaryWindow,
 };
 use bevy_ecs_ldtk::{
     prelude::*,
@@ -29,15 +29,20 @@ pub fn plugin(app: &mut App) {
         EguiPlugin {
             enable_multipass_for_primary_context: true,
         },
+        FpsOverlayPlugin::default(),
         DefaultInspectorConfigPlugin,
         WorldInspectorPlugin::new().run_if(debug_is_active),
         RapierDebugRenderPlugin::default(),
     ))
+    .init_resource::<UiDebugOptions>()
     .insert_resource(DebugMode(true))
     .add_systems(EguiContextPass, inspector_ui.run_if(debug_is_active))
     .add_systems(
         Update,
-        toggle_debug_mode.run_if(input_just_pressed(KeyCode::KeyL)),
+        (
+            toggle_debug_ui.run_if(input_just_pressed(KeyCode::Backquote)),
+            toggle_debug_mode.run_if(input_just_pressed(KeyCode::Backspace)),
+        ),
     )
     .add_systems(
         Update,
@@ -90,6 +95,10 @@ fn inspector_ui(world: &mut World) {
 
 fn toggle_debug_mode(mut mode: ResMut<DebugMode>) {
     **mode = !**mode;
+}
+
+fn toggle_debug_ui(mut options: ResMut<UiDebugOptions>) {
+    options.toggle();
 }
 
 #[allow(clippy::match_like_matches_macro)]

@@ -2,6 +2,46 @@
 name = "load-runner"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+authors = ["Jérémie Fouché"]
+description = "A simple plateform / puzzle 2D."
+homepage = "https://github.com/jfouche/load-runner"
+keywords = ["game", "bevy", "2D"]
+
+[features]
+default = []
+# Enables debug infos and rendering
+dev = ["dep:bevy-inspector-egui", "bevy/bevy_dev_tools", "bevy/bevy_ui_debug", "bevy/track_location"]
+
+
+[dependencies]
+bevy = { version = "0.16", default-features = false, features = [
+    "std", 
+    "async_executor",
+    "bevy_asset",
+    "bevy_color",
+    "bevy_core_pipeline",
+    "bevy_pbr",
+    "bevy_render",
+    "bevy_sprite",
+    "bevy_state",
+    "bevy_text",
+    "bevy_ui",
+    "bevy_window",
+    "bevy_winit",
+    "bevy_audio",
+    "multi_threaded",
+    "default_font",
+    "png",
+    "bevy_ui_picking_backend"
+] }
+bevy_rapier2d = "0.30"
+bevy_ecs_ldtk = "0.12"
+
+# feature: dev
+bevy-inspector-egui = { version="0.31", default-features = false, features = [
+    "bevy_render"
+], optional = true }
 
 [workspace]
 resolver = "2" # Important! wgpu/Bevy needs this!
@@ -16,8 +56,12 @@ opt-level = 1
 lto = true
 codegen-units = 1
 
-[dependencies]
-bevy = "0.16"
-bevy_rapier2d = "0.30"
-bevy_ecs_ldtk = "0.12"
-bevy-inspector-egui="0.31"
+# WASM
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+bevy = { version = "0.16", default-features = false, features = ["webgpu"] }
+
+[profile.wasm-release]
+inherits = "release"
+opt-level = "z"
+lto = "fat"
+codegen-units = 1
