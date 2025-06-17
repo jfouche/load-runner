@@ -46,15 +46,20 @@ pub fn plugin(app: &mut App) {
     )
     .add_systems(
         Update,
-        (toggle_grab, display_player_items).in_set(InGameSet::UserInput),
+        (
+            toggle_grab.run_if(input_just_pressed(KeyCode::KeyG)),
+            display_player_items.run_if(input_just_pressed(KeyCode::KeyI)),
+        )
+            .in_set(InGameSet::UserInput),
     )
     .add_systems(
         Update,
         (
-            // display_collision_events,
-            display_player_position.run_if(on_timer(Duration::from_secs(1)))
+            display_collision_events,
+            display_player_position.run_if(on_timer(Duration::from_secs(1))),
         )
-        .in_set(InGameSet::EntityUpdate),
+            .run_if(debug_is_active)
+            .in_set(InGameSet::EntityUpdate),
     )
     // States
     .add_systems(
@@ -85,7 +90,7 @@ fn inspector_ui(world: &mut World) {
         egui::ScrollArea::both().show(ui, |ui| {
             let filter = Filter::<(Without<ChildOf>, Without<Observer>)>::from_ui_fuzzy(
                 ui,
-                egui::Id::new("KTE DEBUG INSPECTOR FILTER"),
+                egui::Id::new("Load-Runner Debug UI"),
             );
             bevy_inspector::ui_for_entities_filtered(world, ui, true, &filter);
             ui.allocate_space(ui.available_size());
@@ -101,19 +106,13 @@ fn toggle_debug_ui(mut options: ResMut<UiDebugOptions>) {
     options.toggle();
 }
 
-#[allow(clippy::match_like_matches_macro)]
-fn toggle_grab(
-    mut primary_window: Query<&mut Window, With<PrimaryWindow>>,
-    keys: Res<ButtonInput<KeyCode>>,
-) {
+fn toggle_grab(mut primary_window: Query<&mut Window, With<PrimaryWindow>>) {
     if let Ok(window) = primary_window.single_mut() {
-        if keys.just_pressed(KeyCode::KeyG) {
-            let grab = match window.cursor_options.grab_mode {
-                bevy::window::CursorGrabMode::None => true,
-                _ => false,
-            };
-            set_grab_cursor(window, grab);
-        }
+        let grab = match window.cursor_options.grab_mode {
+            bevy::window::CursorGrabMode::None => true,
+            _ => false,
+        };
+        set_grab_cursor(window, grab);
     }
 }
 
@@ -188,14 +187,9 @@ fn state_transition<S: States>(mut events: EventReader<StateTransitionEvent<S>>)
     }
 }
 
-fn display_player_items(
-    input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&Items, &EntityInstance), With<Player>>,
-) {
+fn display_player_items(mut query: Query<(&Items, &EntityInstance), With<Player>>) {
     for (items, entity_instance) in &mut query {
-        if input.just_pressed(KeyCode::KeyI) {
-            dbg!(&items);
-            dbg!(&entity_instance);
-        }
+        dbg!(&items);
+        dbg!(&entity_instance);
     }
 }
