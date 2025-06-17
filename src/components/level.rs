@@ -1,9 +1,8 @@
+use crate::components::item::Items;
 use bevy::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 use std::collections::{HashMap, HashSet};
-
-use crate::components::item::Items;
 
 pub const _ENTITIES_LAYER: usize = 0;
 pub const _WALL_SHADOWS_LAYER: usize = 1;
@@ -15,136 +14,68 @@ pub const LADDER_INT_CELL: i32 = 2;
 pub const STONE_INT_CELL: i32 = 3;
 pub const WATER_INT_CELL: i32 = 4;
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
-pub struct Wall;
+/// A LDTk cell component that should be use as a collider.
+#[derive(Component, Default)]
+pub struct ColliderCell;
 
-#[derive(Clone, Debug, Default, Bundle, LdtkIntCell)]
-pub struct WallBundle {
-    tag: Wall,
-}
+/// A LDTk cell component that represents dirt, which is destructible.
+#[derive(Component, Default, Copy, Clone, Eq, PartialEq, Debug, LdtkIntCell)]
+#[require(Name::new("DirtCell"), ColliderCell)]
+pub struct LdtkDirtCell {}
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
-pub struct Water;
+/// A LDTk cell component that represents stone, which is undestructible.
+#[derive(Component, Default, Copy, Clone, Eq, PartialEq, Debug, LdtkIntCell)]
+#[require(Name::new("StoneCell"), ColliderCell)]
+pub struct LdtkStoneCell {}
 
-#[derive(Clone, Debug, Default, Bundle, LdtkIntCell)]
-pub struct WaterBundle {
-    tag: Water,
-}
+/// A LDTk cell component that represents water, which change the local gravity.
+#[derive(Component, Default, Copy, Clone, Eq, PartialEq, Debug, LdtkIntCell)]
+#[require(Name::new("WaterCell"))]
+pub struct LdtkWaterCell {}
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
 pub struct Climbable;
 
-#[derive(Clone, Bundle, LdtkIntCell)]
-pub struct LadderBundle {
-    name: Name,
-    #[from_int_grid_cell]
-    pub sensor_bundle: SensorBundle,
-    pub climbable: Climbable,
-}
+/// A LDTk cell component that represents a ladder, which is [Climbable].
+#[derive(Component, Default, Copy, Clone, Eq, PartialEq, Debug, LdtkIntCell)]
+#[require(
+    Name::new("LadderCell"),
+    Climbable,
+    Collider::cuboid(8., 8.),
+    Sensor,
+    LockedAxes::ROTATION_LOCKED,
+    ActiveEvents::COLLISION_EVENTS
+)]
+pub struct LdtkLadderCell {}
 
-impl Default for LadderBundle {
-    fn default() -> Self {
-        LadderBundle {
-            name: Name::new("Ladder"),
-            sensor_bundle: SensorBundle::default(),
-            climbable: Climbable,
-        }
-    }
-}
-
-#[derive(Clone, Default, Bundle, LdtkIntCell)]
-pub struct ColliderBundle {
-    pub collider: Collider,
-    pub rigid_body: RigidBody,
-    pub velocity: Velocity,
-    pub rotation_constraints: LockedAxes,
-    pub gravity_scale: GravityScale,
-    pub friction: Friction,
-    pub density: ColliderMassProperties,
-}
-
-#[derive(Clone, Default, Bundle, LdtkIntCell)]
-pub struct SensorBundle {
-    pub collider: Collider,
-    pub sensor: Sensor,
-    pub active_events: ActiveEvents,
-    pub rotation_constraints: LockedAxes,
-}
-
-impl From<IntGridCell> for SensorBundle {
-    fn from(int_grid_cell: IntGridCell) -> SensorBundle {
-        // ladder
-        if int_grid_cell.value == 2 {
-            SensorBundle {
-                collider: Collider::cuboid(8., 8.),
-                sensor: Sensor,
-                rotation_constraints: LockedAxes::ROTATION_LOCKED,
-                active_events: ActiveEvents::COLLISION_EVENTS,
-            }
-        } else {
-            SensorBundle::default()
-        }
-    }
-}
-
-#[derive(Component, Clone, Copy)]
+#[derive(Component, Clone, Copy, Default)]
+#[require(Name::new("Door"), RigidBody::Fixed, Collider::cuboid(8., 16.), Sensor)]
 pub struct Door;
 
-#[derive(Bundle, LdtkEntity)]
+#[derive(Bundle, Default, LdtkEntity)]
 
-pub struct DoorBundle {
+pub struct LdtkDoorBundle {
     tag: Door,
-    name: Name,
     #[from_entity_instance]
     expect: Items,
     #[sprite_sheet]
     sprite_sheet: Sprite,
-    collider_bundle: ColliderBundle,
 }
 
-impl Default for DoorBundle {
-    fn default() -> Self {
-        DoorBundle {
-            tag: Door,
-            name: Name::new("Door"),
-            expect: Items::default(),
-            sprite_sheet: Sprite::default(),
-            collider_bundle: ColliderBundle {
-                collider: Collider::cuboid(8., 16.),
-                rigid_body: RigidBody::Fixed,
-                ..Default::default()
-            },
-        }
-    }
-}
-
-#[derive(Component)]
+#[derive(Component, Default)]
+#[require(
+    Name::new("EndLevel"),
+    RigidBody::Fixed,
+    Collider::cuboid(8., 16.),
+    Sensor
+)]
 pub struct EndLevel;
 
-#[derive(Bundle, LdtkEntity)]
-pub struct EndLevelBundle {
+#[derive(Bundle, Default, LdtkEntity)]
+pub struct LdtkEndLevelBundle {
     tag: EndLevel,
-    name: Name,
     #[sprite_sheet]
     sprite_sheet: Sprite,
-    collider_bundle: ColliderBundle,
-    sensor: Sensor,
-}
-
-impl Default for EndLevelBundle {
-    fn default() -> Self {
-        EndLevelBundle {
-            tag: EndLevel,
-            name: Name::new("EndLevel"),
-            sprite_sheet: Sprite::default(),
-            collider_bundle: ColliderBundle {
-                collider: Collider::cuboid(8., 16.),
-                rigid_body: RigidBody::Fixed,
-                ..Default::default()
-            },
-            sensor: Sensor,
-        }
-    }
 }
 
 /// Consider where the walls are

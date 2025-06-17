@@ -7,7 +7,6 @@ use crate::{
         },
         enemy::Enemy,
         item::{Item, Items},
-        level::ColliderBundle,
         player::{Player, PlayerAssets, PlayerDeathEvent},
         GROUP_ENEMY,
     },
@@ -200,7 +199,7 @@ fn animate_death(
                 Some(idx) if idx >= DEATH_INDICES.len() - 1 => {
                     commands
                         .entity(player_entity)
-                        .remove::<(Dying, AnimationTimer, ColliderBundle)>();
+                        .remove::<(Dying, AnimationTimer)>();
                     commands.trigger(PlayerDeathEvent);
                 }
                 Some(idx) => atlas.index = DEATH_INDICES[idx + 1],

@@ -1,16 +1,28 @@
 use crate::components::{
     character::{Damage, Life, Speed},
-    level::ColliderBundle,
     GROUP_ENEMY,
 };
 use bevy::prelude::*;
 use bevy_ecs_ldtk::{prelude::*, utils::ldtk_pixel_coords_to_translation_pivoted};
 use bevy_rapier2d::prelude::*;
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
+#[derive(Component, Copy, Clone, Eq, PartialEq, Debug, Default)]
+#[require(
+    Name::new("Enemy"),
+    Life,
+    Speed,
+    Damage(2),
+    Sprite,
+    Collider::cuboid(15., 15.),
+    RigidBody::KinematicVelocityBased,
+    Velocity,
+    LockedAxes::ROTATION_LOCKED,
+    ActiveEvents::COLLISION_EVENTS,
+    CollisionGroups::new(GROUP_ENEMY, Group::ALL)
+)]
 pub struct Enemy;
 
-#[derive(Clone, PartialEq, Debug, Default, Component)]
+#[derive(Clone, PartialEq, Debug, Default, Component, Reflect)]
 pub struct Patrol {
     pub points: Vec<Vec2>,
     pub index: usize,
@@ -63,40 +75,15 @@ impl LdtkEntity for Patrol {
     }
 }
 
-#[derive(Clone, Bundle, LdtkEntity)]
-pub struct MobBundle {
+#[derive(Clone, Bundle, Default, LdtkEntity)]
+pub struct LdtkMobBundle {
     enemy: Enemy,
-    name: Name,
     #[from_entity_instance]
     life: Life,
     #[from_entity_instance]
     speed: Speed,
-    damage: Damage,
     #[sprite_sheet]
     sprite_sheet: Sprite,
-    collider_bundle: ColliderBundle,
-    collision_groups: CollisionGroups,
     #[ldtk_entity]
     patrol: Patrol,
-}
-
-impl Default for MobBundle {
-    fn default() -> Self {
-        MobBundle {
-            enemy: Enemy,
-            name: Name::new("Enemy - Mob"),
-            life: Life::default(),
-            speed: Speed::default(),
-            damage: Damage(2),
-            sprite_sheet: Sprite::default(),
-            collider_bundle: ColliderBundle {
-                collider: Collider::cuboid(15., 15.),
-                rigid_body: RigidBody::KinematicVelocityBased,
-                rotation_constraints: LockedAxes::ROTATION_LOCKED,
-                ..Default::default()
-            },
-            collision_groups: CollisionGroups::new(GROUP_ENEMY, Group::ALL),
-            patrol: Patrol::default(),
-        }
-    }
 }

@@ -1,13 +1,11 @@
-use std::collections::HashSet;
-
 use crate::{
     components::{
-        enemy::MobBundle,
-        item::{ChestBundle, ItemAssets, Items},
+        enemy::LdtkMobBundle,
+        item::{ItemAssets, Items, LdtkChestBundle},
         level::{
-            Door, DoorBundle, EndLevel, EndLevelBundle, LadderBundle, LevelColliders, Wall,
-            WallBundle, WaterBundle, COLLISIONS_LAYER, DIRT_INT_CELL, LADDER_INT_CELL,
-            STONE_INT_CELL, WATER_INT_CELL,
+            ColliderCell, Door, EndLevel, LdtkDirtCell, LdtkDoorBundle, LdtkEndLevelBundle,
+            LdtkLadderCell, LdtkStoneCell, LdtkWaterCell, LevelColliders, COLLISIONS_LAYER,
+            DIRT_INT_CELL, LADDER_INT_CELL, STONE_INT_CELL, WATER_INT_CELL,
         },
         player::{LdtkPlayerBundle, Player},
     },
@@ -20,6 +18,7 @@ use crate::{
 use bevy::{ecs::query::QuerySingleError, prelude::*};
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
+use std::collections::HashSet;
 
 pub fn level_plugin(app: &mut App) {
     app.add_plugins(LdtkPlugin)
@@ -31,15 +30,15 @@ pub fn level_plugin(app: &mut App) {
             set_clear_color: SetClearColor::FromLevelBackground,
             ..Default::default()
         })
-        .register_ldtk_int_cell::<WallBundle>(DIRT_INT_CELL)
-        .register_ldtk_int_cell::<LadderBundle>(LADDER_INT_CELL)
-        .register_ldtk_int_cell::<WallBundle>(STONE_INT_CELL)
-        .register_ldtk_int_cell::<WaterBundle>(WATER_INT_CELL)
+        .register_ldtk_int_cell::<LdtkDirtCell>(DIRT_INT_CELL)
+        .register_ldtk_int_cell::<LdtkLadderCell>(LADDER_INT_CELL)
+        .register_ldtk_int_cell::<LdtkStoneCell>(STONE_INT_CELL)
+        .register_ldtk_int_cell::<LdtkWaterCell>(WATER_INT_CELL)
         .register_ldtk_entity::<LdtkPlayerBundle>("Player")
-        .register_ldtk_entity::<MobBundle>("Mob")
-        .register_ldtk_entity::<ChestBundle>("Chest")
-        .register_ldtk_entity::<DoorBundle>("Door")
-        .register_ldtk_entity::<EndLevelBundle>("End")
+        .register_ldtk_entity::<LdtkMobBundle>("Mob")
+        .register_ldtk_entity::<LdtkChestBundle>("Chest")
+        .register_ldtk_entity::<LdtkDoorBundle>("Door")
+        .register_ldtk_entity::<LdtkEndLevelBundle>("End")
         // LevelLoading
         .add_systems(
             OnEnter(InGameState::LevelLoading),
@@ -153,7 +152,7 @@ fn wait_for_end_of_level_loading(
 
 /// Spawns collisions for the walls of a level
 ///
-/// You could just insert a ColliderBundle in to the WallBundle,
+/// You could just insert a Collider in to the WallBundle,
 /// but this spawns a different collider for EVERY wall tile.
 /// This approach leads to bad performance.
 ///
@@ -161,13 +160,13 @@ fn wait_for_end_of_level_loading(
 /// we can minimize the amount of colliding entities.
 fn spawn_wall_collision(
     mut commands: Commands,
-    wall_query: Query<(&GridCoords, &ChildOf), Added<Wall>>,
-    parents: Query<&ChildOf, Without<Wall>>,
+    collider_cells: Query<(&GridCoords, &ChildOf), Added<ColliderCell>>,
+    parents: Query<&ChildOf, Without<ColliderCell>>,
     levels: Query<(Entity, &LevelIid)>,
     ldtk_projects: Query<&LdtkProjectHandle>,
     ldtk_project_assets: Res<Assets<LdtkProject>>,
 ) -> Result {
-    if wall_query.is_empty() {
+    if collider_cells.is_empty() {
         return Ok(());
     }
 
@@ -177,7 +176,7 @@ fn spawn_wall_collision(
         .as_standalone();
 
     let mut level_colliders = LevelColliders::new();
-    wall_query
+    collider_cells
         .iter()
         // An intgrid tile's direct parent will be a layer entity, not the level entity
         // To get the level entity, you need the tile's grandparent.

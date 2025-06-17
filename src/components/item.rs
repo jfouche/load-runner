@@ -3,8 +3,6 @@ use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 use std::slice::Iter;
 
-use crate::components::level::ColliderBundle;
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Reflect)]
 pub enum Item {
     Gem,
@@ -73,38 +71,18 @@ impl From<&EntityInstance> for Items {
     }
 }
 
-#[derive(Copy, Clone, Component, Debug, Eq, Default, PartialEq)]
+/// The items component is used to store the items that a chest contains.
+#[derive(Component, Copy, Clone, Debug, Eq, Default, PartialEq)]
+#[require(Name::new("Chest"), Items, RigidBody::Fixed, Collider::cuboid(8., 8.))]
 pub struct Chest;
 
-#[derive(Clone, Bundle, LdtkEntity)]
-pub struct ChestBundle {
+#[derive(Clone, Bundle, Default, LdtkEntity)]
+pub struct LdtkChestBundle {
     tag: Chest,
-    name: Name,
     #[from_entity_instance]
     items: Items,
     #[sprite_sheet]
     sprite_sheet: Sprite,
-    collider_bundle: ColliderBundle,
-}
-
-impl Default for ChestBundle {
-    fn default() -> Self {
-        ChestBundle {
-            tag: Chest,
-            name: Name::new("Chest"),
-            items: Items::default(),
-            sprite_sheet: Sprite::default(),
-            collider_bundle: ColliderBundle {
-                collider: Collider::cuboid(8., 8.),
-                rigid_body: RigidBody::Dynamic,
-                rotation_constraints: LockedAxes::ROTATION_LOCKED,
-                gravity_scale: GravityScale(1.0),
-                friction: Friction::new(0.5),
-                density: ColliderMassProperties::Density(15.0),
-                ..Default::default()
-            },
-        }
-    }
 }
 
 #[derive(Resource, Clone, Asset, TypePath)]

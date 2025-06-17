@@ -3,7 +3,7 @@ use crate::{
         character::{
             Climber, GroundDetection, GroundSensor, InWater, JumpSpeed, Jumping, Life, Speed,
         },
-        level::{Climbable, Water, COLLISIONS_LAYER},
+        level::{Climbable, LdtkWaterCell, COLLISIONS_LAYER},
     },
     schedule::InGameSet,
 };
@@ -130,8 +130,8 @@ fn update_in_water(
     mut in_waters: Query<(&Transform, &mut InWater)>,
     ldtk_projects: Query<&LdtkProjectHandle>,
     level_query: Query<(Entity, &Transform, &LevelIid)>,
-    water_cells: Query<(&GridCoords, &ChildOf), With<Water>>,
-    parents: Query<&ChildOf, Without<Water>>,
+    water_cells: Query<(&GridCoords, &ChildOf), With<LdtkWaterCell>>,
+    parents: Query<&ChildOf, Without<LdtkWaterCell>>,
     ldtk_project_assets: Res<Assets<LdtkProject>>,
     level_selection: Res<LevelSelection>,
 ) {
