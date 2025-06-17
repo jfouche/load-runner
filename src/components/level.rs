@@ -33,6 +33,7 @@ pub struct LdtkStoneCell {}
 #[require(Name::new("WaterCell"))]
 pub struct LdtkWaterCell {}
 
+/// Marker component that indicate a cell is climbable
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
 pub struct Climbable;
 
@@ -62,6 +63,7 @@ pub struct LdtkDoorBundle {
     sprite_sheet: Sprite,
 }
 
+/// Marker of the end of a level
 #[derive(Component, Default)]
 #[require(
     Name::new("EndLevel"),
@@ -109,14 +111,8 @@ impl LevelColliders {
     /// 1. consider where the walls are
     /// 2. combine wall tiles into flat "plates" in each individual row
     /// 3. combine the plates into rectangles across multiple rows wherever possible
-    /// 4. spawn colliders for each rectangle
-    pub fn combine(
-        &self,
-        level: &Entity,
-        width: i32,
-        height: i32,
-        grid_size: i32,
-    ) -> Vec<WallColliderBundle> {
+    /// It returns all rectangle corresponding to levels colliders
+    pub fn rectangles(&self, level: &Entity, width: i32, height: i32) -> Vec<IRect> {
         let mut colliders = vec![];
         if let Some(level_colliders) = self.level_to_colliders_locations.get(level) {
             // combine wall tiles into flat "plates" in each individual row
@@ -140,12 +136,11 @@ impl LevelColliders {
                         _ => (),
                     }
                 }
-
                 plate_stack.push(row_plates);
             }
 
             // combine "plates" into rectangles across multiple rows
-            let mut rect_builder: HashMap<Plate, WallRect> = HashMap::new();
+            let mut rect_builder: HashMap<Plate, IRect> = HashMap::new();
             let mut prev_row: Vec<Plate> = Vec::new();
 
             // an extra empty row so the algorithm "finishes" the rects that touch the top edge
@@ -156,20 +151,16 @@ impl LevelColliders {
                     if !current_row.contains(prev_plate) {
                         // remove the finished rect so that the same plate in the future starts a new rect
                         if let Some(rect) = rect_builder.remove(prev_plate) {
-                            colliders.push(WallColliderBundle::new(rect, grid_size));
+                            // colliders.push(WallColliderBundle::new(rect, grid_size));
+                            colliders.push(rect);
                         }
                     }
                 }
                 for plate in &current_row {
                     rect_builder
                         .entry(plate.clone())
-                        .and_modify(|wr| wr.top += 1)
-                        .or_insert(WallRect {
-                            bottom: y as i32,
-                            top: y as i32,
-                            left: plate.left,
-                            right: plate.right,
-                        });
+                        .and_modify(|rect| rect.max.y += 1)
+                        .or_insert(IRect::new(plate.left, y as i32, plate.right, y as i32));
                 }
                 prev_row = current_row;
             }
@@ -178,42 +169,17 @@ impl LevelColliders {
     }
 }
 
-#[derive(Bundle)]
-pub struct WallColliderBundle {
-    name: Name,
-    collider: Collider,
-    body: RigidBody,
-    friction: Friction,
-    transform: Transform,
-}
-
-impl WallColliderBundle {
-    fn new(wall_rect: WallRect, grid_size: i32) -> Self {
-        let collider = Collider::cuboid(
-            (wall_rect.right as f32 - wall_rect.left as f32 + 1.) * grid_size as f32 / 2.,
-            (wall_rect.top as f32 - wall_rect.bottom as f32 + 1.) * grid_size as f32 / 2.,
-        );
-        let transform = Transform::from_xyz(
-            (wall_rect.left + wall_rect.right + 1) as f32 * grid_size as f32 / 2.,
-            (wall_rect.bottom + wall_rect.top + 1) as f32 * grid_size as f32 / 2.,
-            0.,
-        );
-        WallColliderBundle {
-            name: Name::new("WallCollider"),
-            collider,
-            body: RigidBody::Fixed,
-            friction: Friction::new(1.0),
-            transform,
-        }
-    }
-}
-
-/// A simple rectangle type representing a wall of any size
-struct WallRect {
-    pub left: i32,
-    pub right: i32,
-    pub top: i32,
-    pub bottom: i32,
+pub fn level_collider(rect: IRect, grid_size: i32) -> impl Bundle {
+    let scale = grid_size as f32 / 2.;
+    let half_size = (rect.size() + ivec2(1, 1)).as_vec2() * scale;
+    let pos = ivec2(rect.min.x + rect.max.x + 1, rect.min.y + rect.max.y + 1).as_vec2() * scale;
+    (
+        Name::new("WallCollider"),
+        Transform::from_translation(pos.extend(0.)),
+        Collider::cuboid(half_size.x, half_size.y),
+        RigidBody::Fixed,
+        Friction::new(1.0),
+    )
 }
 
 /// Represents a wide wall that is 1 tile tall

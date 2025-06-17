@@ -7,7 +7,8 @@ use crate::{
         },
         enemy::Enemy,
         item::{Item, Items},
-        player::{Player, PlayerAssets, PlayerDeathEvent},
+        level::{LdtkDirtCell, COLLISIONS_LAYER},
+        player::{DigEvent, Player, PlayerAssets, PlayerDeathEvent},
         GROUP_ENEMY,
     },
     schedule::InGameSet,
@@ -17,12 +18,13 @@ use crate::{
     },
 };
 use bevy::prelude::*;
+use bevy_ecs_ldtk::{prelude::*, utils::translation_to_grid_coords};
 use bevy_rapier2d::prelude::*;
 use std::time::Duration;
 
 pub fn player_plugin(app: &mut App) {
     app.load_resource::<PlayerAssets>()
-        .add_systems(Update, movement.in_set(InGameSet::UserInput))
+        .add_systems(Update, (movement, dig_hole).in_set(InGameSet::UserInput))
         .add_systems(
             Update,
             (
@@ -278,6 +280,64 @@ fn movement(
             climber.climbing = false;
         }
     }
+}
+
+fn dig_hole(
+    mut commands: Commands,
+    input: Res<ButtonInput<KeyCode>>,
+    players: Query<&Transform, With<Player>>,
+    ldtk_projects: Query<&LdtkProjectHandle>,
+    levels: Query<(&Transform, &LevelIid), Without<Player>>,
+    diggable_cells: Query<(Entity, &GridCoords), With<LdtkDirtCell>>,
+    ldtk_project_assets: Res<Assets<LdtkProject>>,
+    level_selection: Res<LevelSelection>,
+) -> Result {
+    let dig_left = input.just_pressed(KeyCode::KeyQ);
+    let dig_right = input.just_pressed(KeyCode::KeyE);
+
+    if !dig_left && !dig_right {
+        // Player don't dig
+        return Ok(());
+    }
+
+    let player_transform = players.single()?;
+    let ldtk_project = ldtk_project_assets
+        .get(ldtk_projects.single()?)
+        .ok_or(BevyError::from("Project should exist"))?;
+
+    let player_coord = levels
+        .iter()
+        .filter_map(|(transform, iid)| {
+            let level = ldtk_project.get_raw_level_by_iid(&iid.to_string())?;
+            let layer_info = level.layer_instances.as_ref()?.get(COLLISIONS_LAYER)?;
+            level_selection
+                .is_match(&LevelIndices::default(), level)
+                .then_some((transform, layer_info))
+        })
+        .map(|(level_transform, layer_info)| {
+            let translation = player_transform.translation.xy() - level_transform.translation.xy();
+            translation_to_grid_coords(translation, IVec2::splat(layer_info.grid_size))
+        })
+        .next()
+        .ok_or(BevyError::from("Unable to retrieve player coord"))?;
+
+    let x = if dig_left {
+        player_coord.x - 1
+    } else {
+        player_coord.x + 1
+    };
+    let cell_coord = GridCoords {
+        x,
+        y: player_coord.y + 1,
+    };
+    if let Some(cell_entity) = diggable_cells
+        .iter()
+        .find(|(_e, &coord)| coord == cell_coord)
+        .map(|(e, _c)| e)
+    {
+        commands.trigger_targets(DigEvent, cell_entity);
+    }
+    Ok(())
 }
 
 fn enemy_hit_player(

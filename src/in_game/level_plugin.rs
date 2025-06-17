@@ -3,11 +3,11 @@ use crate::{
         enemy::LdtkMobBundle,
         item::{ItemAssets, Items, LdtkChestBundle},
         level::{
-            ColliderCell, Door, EndLevel, LdtkDirtCell, LdtkDoorBundle, LdtkEndLevelBundle,
-            LdtkLadderCell, LdtkStoneCell, LdtkWaterCell, LevelColliders, COLLISIONS_LAYER,
-            DIRT_INT_CELL, LADDER_INT_CELL, STONE_INT_CELL, WATER_INT_CELL,
+            level_collider, ColliderCell, Door, EndLevel, LdtkDirtCell, LdtkDoorBundle,
+            LdtkEndLevelBundle, LdtkLadderCell, LdtkStoneCell, LdtkWaterCell, LevelColliders,
+            COLLISIONS_LAYER, DIRT_INT_CELL, LADDER_INT_CELL, STONE_INT_CELL, WATER_INT_CELL,
         },
-        player::{LdtkPlayerBundle, Player},
+        player::{DigEvent, LdtkPlayerBundle, Player},
     },
     in_game::popup_with_images::popup_with_images,
     schedule::{GameState, InGameSet, InGameState},
@@ -64,7 +64,8 @@ pub fn level_plugin(app: &mut App) {
             (open_door, end_level).in_set(InGameSet::CollisionDetection),
         )
         .add_systems(Update, restart_level.in_set(InGameSet::UserInput))
-        .add_observer(run_level_after_fading);
+        .add_observer(run_level_after_fading)
+        .add_observer(|t: Trigger<DigEvent>| warn!("DigEvent {}", t.target()));
 }
 
 #[derive(Component)]
@@ -201,14 +202,12 @@ fn spawn_wall_collision(
             ..
         } = level.layer_instances()[COLLISIONS_LAYER];
 
-        let colliders = level_colliders.combine(&level_entity, width, height, grid_size);
-
         // Spawn colliders for every rectangle..
         // Making the collider a child of the level serves two purposes:
         // 1. Adjusts the transforms to be relative to the level for free
         // 2. the colliders will be despawned automatically when levels unload
-        for collider in colliders {
-            commands.spawn((collider, ChildOf(level_entity)));
+        for rect in level_colliders.rectangles(&level_entity, width, height) {
+            commands.spawn((level_collider(rect, grid_size), ChildOf(level_entity)));
         }
     }
     Ok(())

@@ -56,7 +56,7 @@ pub fn plugin(app: &mut App) {
         Update,
         (
             display_collision_events,
-            display_player_position.run_if(on_timer(Duration::from_secs(1))),
+            // display_player_position.run_if(on_timer(Duration::from_secs(1))),
         )
             .run_if(debug_is_active)
             .in_set(InGameSet::EntityUpdate),
@@ -146,31 +146,33 @@ fn display_collision_events(
 fn display_player_position(
     players: Query<&Transform, With<Player>>,
     ldtk_projects: Query<&LdtkProjectHandle>,
-    level_query: Query<(&Transform, &LevelIid), Without<Player>>,
+    levels: Query<(&Transform, &LevelIid), Without<Player>>,
     ldtk_project_assets: Res<Assets<LdtkProject>>,
     level_selection: Res<LevelSelection>,
-) {
-    if let Ok(ldtk_project) = ldtk_projects.single() {
-        if let Ok(player_transform) = players.single() {
-            level_query
-                .iter()
-                .filter_map(|(transform, iid)| {
-                    let ldtk_project = ldtk_project_assets.get(ldtk_project)?;
-                    let level = ldtk_project.get_raw_level_by_iid(&iid.to_string())?;
-                    let layer_info = level.layer_instances.as_ref()?.get(COLLISIONS_LAYER)?;
-                    level_selection
-                        .is_match(&LevelIndices::default(), level)
-                        .then_some((transform, layer_info))
-                })
-                .for_each(|(level_transform, layer_info)| {
-                    let translation =
-                        player_transform.translation.xy() - level_transform.translation.xy();
-                    let character_coord =
-                        translation_to_grid_coords(translation, IVec2::splat(layer_info.grid_size));
-                    info!("player coords: {character_coord:?}");
-                });
-        }
-    }
+) -> Result {
+    let player_transform = players.single()?;
+    let ldtk_project = ldtk_project_assets
+        .get(ldtk_projects.single()?)
+        .ok_or(BevyError::from("Project should exist"))?;
+
+    let player_coord = levels
+        .iter()
+        .filter_map(|(transform, iid)| {
+            let level = ldtk_project.get_raw_level_by_iid(&iid.to_string())?;
+            let layer_info = level.layer_instances.as_ref()?.get(COLLISIONS_LAYER)?;
+            level_selection
+                .is_match(&LevelIndices::default(), level)
+                .then_some((transform, layer_info))
+        })
+        .map(|(level_transform, layer_info)| {
+            let translation = player_transform.translation.xy() - level_transform.translation.xy();
+            translation_to_grid_coords(translation, IVec2::splat(layer_info.grid_size))
+        })
+        .next()
+        .ok_or(BevyError::from("Unable to retrieve player coord"))?;
+    info!("player coords: {player_coord:?}");
+
+    Ok(())
 }
 
 fn display_states(game_state: Res<State<GameState>>, in_game_state: Res<State<InGameState>>) {

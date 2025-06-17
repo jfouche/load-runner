@@ -106,3 +106,6 @@ pub struct LdtkPlayerBundle {
 
 #[derive(Event)]
 pub struct PlayerDeathEvent;
+
+#[derive(Event)]
+pub struct DigEvent;
