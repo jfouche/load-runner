@@ -5,6 +5,7 @@ use crate::{
     components::{item::Items, level::COLLISIONS_LAYER, player::Player},
     cursor::*,
     schedule::*,
+    utils::iter_ext::IterExt,
 };
 use bevy::{
     dev_tools::fps_overlay::FpsOverlayPlugin, input::common_conditions::input_just_pressed,
@@ -168,8 +169,7 @@ fn display_player_position(
             let translation = player_transform.translation.xy() - level_transform.translation.xy();
             translation_to_grid_coords(translation, IVec2::splat(layer_info.grid_size))
         })
-        .next()
-        .ok_or(BevyError::from("Unable to retrieve player coord"))?;
+        .single()?;
     info!("player coords: {player_coord:?}");
 
     Ok(())

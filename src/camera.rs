@@ -50,12 +50,12 @@ fn camera_fit_inside_current_level(
     };
     let ldtk_project = ldtk_project_assets
         .get(ldtk_projects.single()?)
-        .expect("Project should be loaded if level has spawned");
+        .ok_or("Project should be loaded if level has spawned")?;
 
     for (level_transform, level_iid) in &level_query {
         let level = ldtk_project
             .get_raw_level_by_iid(&level_iid.to_string())
-            .expect("Spawned level should exist in LDtk project");
+            .ok_or("Spawned level should exist in LDtk project")?;
         if level_selection.is_match(&LevelIndices::default(), level) {
             let level_ratio = level.px_wid as f32 / level.px_hei as f32;
             orthographic_projection.viewport_origin = Vec2::ZERO;

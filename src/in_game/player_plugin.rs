@@ -15,6 +15,7 @@ use crate::{
     utils::{
         collisions::{start_event_filter, QueryEither},
         invulnerable::Invulnerable,
+        iter_ext::IterExt,
     },
 };
 use bevy::prelude::*;
@@ -288,7 +289,8 @@ fn dig_hole(
     players: Query<&Transform, With<Player>>,
     ldtk_projects: Query<&LdtkProjectHandle>,
     levels: Query<(&Transform, &LevelIid), Without<Player>>,
-    diggable_cells: Query<(Entity, &GridCoords), With<LdtkDirtCell>>,
+    diggable_cells: Query<(Entity, &GridCoords, &ChildOf), With<LdtkDirtCell>>,
+    layers: Query<(Entity, &LayerMetadata)>,
     ldtk_project_assets: Res<Assets<LdtkProject>>,
     level_selection: Res<LevelSelection>,
 ) -> Result {
@@ -303,9 +305,9 @@ fn dig_hole(
     let player_transform = players.single()?;
     let ldtk_project = ldtk_project_assets
         .get(ldtk_projects.single()?)
-        .ok_or(BevyError::from("Project should exist"))?;
+        .ok_or("Project should exist")?;
 
-    let player_coord = levels
+    let (level_transform, layer_info) = levels
         .iter()
         .filter_map(|(transform, iid)| {
             let level = ldtk_project.get_raw_level_by_iid(&iid.to_string())?;
@@ -314,13 +316,21 @@ fn dig_hole(
                 .is_match(&LevelIndices::default(), level)
                 .then_some((transform, layer_info))
         })
-        .map(|(level_transform, layer_info)| {
-            let translation = player_transform.translation.xy() - level_transform.translation.xy();
-            translation_to_grid_coords(translation, IVec2::splat(layer_info.grid_size))
-        })
-        .next()
-        .ok_or(BevyError::from("Unable to retrieve player coord"))?;
+        .single()?;
 
+    // get 'Collisions' layer entities where tiles are on
+    let layers_entity = layers
+        .iter()
+        .filter_map(|(layer_entity, metadata)| {
+            (metadata.iid == layer_info.iid).then_some(layer_entity)
+        })
+        .collect::<Vec<_>>();
+
+    // get player coords
+    let translation = player_transform.translation.xy() - level_transform.translation.xy();
+    let player_coord = translation_to_grid_coords(translation, IVec2::splat(layer_info.grid_size));
+
+    // Get the dig coords
     let x = if dig_left {
         player_coord.x - 1
     } else {
@@ -328,12 +338,15 @@ fn dig_hole(
     };
     let cell_coord = GridCoords {
         x,
-        y: player_coord.y + 1,
+        y: player_coord.y - 1,
     };
-    if let Some(cell_entity) = diggable_cells
+
+    // get the digged cell
+    if let Ok(cell_entity) = diggable_cells
         .iter()
-        .find(|(_e, &coord)| coord == cell_coord)
-        .map(|(e, _c)| e)
+        .filter(|(_, &coord, ChildOf(le))| layers_entity.contains(le) && coord == cell_coord)
+        .map(|(e, _c, _)| e)
+        .single()
     {
         commands.trigger_targets(DigEvent, cell_entity);
     }
@@ -347,13 +360,13 @@ fn enemy_hit_player(
     enemies: Query<&Damage, With<Enemy>>,
 ) -> Result {
     let (player_entity, mut life) = players.single_mut()?;
-    if let Some(damage) = collisions
+    if let Ok(damage) = collisions
         .read()
         .filter_map(start_event_filter)
         .filter_map(|(&e1, &e2)| enemies.get_either(e1, e2))
         .filter(|(_damage, _enemy_entity, other_entity)| *other_entity == player_entity)
         .map(|(damage, _enemy_entity, _player_entity)| damage)
-        .next()
+        .single()
     {
         life.hit(damage.0);
         if life.is_dead() {

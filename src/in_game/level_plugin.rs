@@ -17,6 +17,7 @@ use crate::{
 };
 use bevy::{ecs::query::QuerySingleError, prelude::*};
 use bevy_ecs_ldtk::prelude::*;
+use bevy_ecs_tilemap::tiles::TileVisible;
 use bevy_rapier2d::prelude::*;
 use std::collections::HashSet;
 
@@ -65,7 +66,7 @@ pub fn level_plugin(app: &mut App) {
         )
         .add_systems(Update, restart_level.in_set(InGameSet::UserInput))
         .add_observer(run_level_after_fading)
-        .add_observer(|t: Trigger<DigEvent>| warn!("DigEvent {}", t.target()));
+        .add_observer(on_dig);
 }
 
 #[derive(Component)]
@@ -89,7 +90,7 @@ fn show_level(mut commands: Commands) {
     commands.spawn(fader(LOADING_SCREEN_BACKGROUND_COLOR, Color::NONE, 2.0));
 }
 
-/// wait for fader to finish, and start running
+/// wait for fader to finish, and start running game
 fn run_level_after_fading(
     trigger: Trigger<FaderFinishEvent>,
     mut commands: Commands,
@@ -113,10 +114,9 @@ fn spawn_level(
         }
         Err(QuerySingleError::NoEntities(_)) => {
             // Spawn a new project
-            let ldtk_handle = asset_server.load("load-runner.ldtk");
             commands.spawn((
                 LdtkWorldBundle {
-                    ldtk_handle: ldtk_handle.into(),
+                    ldtk_handle: asset_server.load("load-runner.ldtk").into(),
                     ..Default::default()
                 },
                 Name::new("MapWorld"),
@@ -182,8 +182,8 @@ fn spawn_wall_collision(
         // An intgrid tile's direct parent will be a layer entity, not the level entity
         // To get the level entity, you need the tile's grandparent.
         // This is where parent_query comes in.
-        .filter_map(|(grid_coords, &ChildOf(parent))| {
-            let ChildOf(level_entity) = parents.get(parent).ok()?;
+        .filter_map(|(grid_coords, &ChildOf(layer))| {
+            let ChildOf(level_entity) = parents.get(layer).ok()?;
             Some((level_entity, grid_coords))
         })
         .for_each(|(&level_entity, &grid_coords)| {
@@ -195,19 +195,16 @@ fn spawn_wall_collision(
             .get_loaded_level_by_iid(&level_iid.to_string())
             .ok_or("Spawned level should exist in LDtk project")?;
 
-        let LayerInstance {
-            c_wid: width,
-            c_hei: height,
-            grid_size,
-            ..
-        } = level.layer_instances()[COLLISIONS_LAYER];
-
         // Spawn colliders for every rectangle..
         // Making the collider a child of the level serves two purposes:
         // 1. Adjusts the transforms to be relative to the level for free
         // 2. the colliders will be despawned automatically when levels unload
-        for rect in level_colliders.rectangles(&level_entity, width, height) {
-            commands.spawn((level_collider(rect, grid_size), ChildOf(level_entity)));
+        let layer = level
+            .layer_instances()
+            .get(COLLISIONS_LAYER)
+            .expect("COLLISIONS_LAYER");
+        for rect in level_colliders.rectangles(&level_entity, layer.c_wid, layer.c_hei) {
+            commands.spawn((level_collider(rect, layer.grid_size), ChildOf(level_entity)));
         }
     }
     Ok(())
@@ -303,4 +300,11 @@ fn end_level(
             info!("Player end level");
             in_game_state.set(InGameState::PlayerEndedLevel);
         });
+}
+
+fn on_dig(trigger: Trigger<DigEvent>, mut cells: Query<&mut TileVisible, With<LdtkDirtCell>>) {
+    warn!("DigEvent {}", trigger.target());
+    if let Ok(mut visible) = cells.get_mut(trigger.target()) {
+        visible.0 = false;
+    }
 }
