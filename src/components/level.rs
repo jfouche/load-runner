@@ -20,7 +20,7 @@ pub struct ColliderCell;
 
 /// A LDTk cell component that represents dirt, which is destructible.
 #[derive(Component, Default, Copy, Clone, Eq, PartialEq, Debug, LdtkIntCell)]
-#[require(Name::new("DirtCell"), ColliderCell)]
+#[require(Name::new("DirtCell"), ColliderCell, Destructible)]
 pub struct LdtkDirtCell {}
 
 /// A LDTk cell component that represents stone, which is undestructible.
@@ -32,6 +32,15 @@ pub struct LdtkStoneCell {}
 #[derive(Component, Default, Copy, Clone, Eq, PartialEq, Debug, LdtkIntCell)]
 #[require(Name::new("WaterCell"))]
 pub struct LdtkWaterCell {}
+
+/// Marker component that indicate a cell is destructibe
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
+pub struct Destructible;
+
+/// Marker component that indicate a [Destructible] cell is destroyed
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
+#[component(storage = "SparseSet")]
+pub struct Destroyed;
 
 /// Marker component that indicate a cell is climbable
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default, Component)]
@@ -169,11 +178,15 @@ impl LevelColliders {
     }
 }
 
+#[derive(Component)]
+pub struct LevelCollider;
+
 pub fn level_collider(rect: IRect, grid_size: i32) -> impl Bundle {
     let scale = grid_size as f32 / 2.;
     let half_size = (rect.size() + ivec2(1, 1)).as_vec2() * scale;
     let pos = ivec2(rect.min.x + rect.max.x + 1, rect.min.y + rect.max.y + 1).as_vec2() * scale;
     (
+        LevelCollider,
         Name::new("WallCollider"),
         Transform::from_translation(pos.extend(0.)),
         Collider::cuboid(half_size.x, half_size.y),
@@ -189,3 +202,6 @@ struct Plate {
     left: i32,
     right: i32,
 }
+
+#[derive(Event)]
+pub struct UpdateCollidersEvent;

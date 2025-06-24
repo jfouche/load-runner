@@ -3,9 +3,10 @@ use crate::{
         enemy::LdtkMobBundle,
         item::{ItemAssets, Items, LdtkChestBundle},
         level::{
-            level_collider, ColliderCell, Door, EndLevel, LdtkDirtCell, LdtkDoorBundle,
-            LdtkEndLevelBundle, LdtkLadderCell, LdtkStoneCell, LdtkWaterCell, LevelColliders,
-            COLLISIONS_LAYER, DIRT_INT_CELL, LADDER_INT_CELL, STONE_INT_CELL, WATER_INT_CELL,
+            level_collider, ColliderCell, Destroyed, Destructible, Door, EndLevel, LdtkDirtCell,
+            LdtkDoorBundle, LdtkEndLevelBundle, LdtkLadderCell, LdtkStoneCell, LdtkWaterCell,
+            LevelCollider, LevelColliders, UpdateCollidersEvent, COLLISIONS_LAYER, DIRT_INT_CELL,
+            LADDER_INT_CELL, STONE_INT_CELL, WATER_INT_CELL,
         },
         player::{DigEvent, LdtkPlayerBundle, Player},
     },
@@ -66,7 +67,8 @@ pub fn level_plugin(app: &mut App) {
         )
         .add_systems(Update, restart_level.in_set(InGameSet::UserInput))
         .add_observer(run_level_after_fading)
-        .add_observer(on_dig);
+        .add_observer(on_dig)
+        .add_observer(recalculate_level_collisions);
 }
 
 #[derive(Component)]
@@ -302,9 +304,74 @@ fn end_level(
         });
 }
 
-fn on_dig(trigger: Trigger<DigEvent>, mut cells: Query<&mut TileVisible, With<LdtkDirtCell>>) {
+fn on_dig(
+    trigger: Trigger<DigEvent>,
+    mut commands: Commands,
+    mut cells: Query<&mut TileVisible, With<Destructible>>,
+) {
     warn!("DigEvent {}", trigger.target());
     if let Ok(mut visible) = cells.get_mut(trigger.target()) {
         visible.0 = false;
+        commands.entity(trigger.target()).insert(Destroyed);
+        commands.trigger(UpdateCollidersEvent);
     }
+}
+
+fn recalculate_level_collisions(
+    _trigger: Trigger<UpdateCollidersEvent>,
+    mut commands: Commands,
+    colliders: Query<Entity, With<LevelCollider>>,
+    collider_cells: Query<(&GridCoords, &ChildOf), (With<ColliderCell>, Without<Destroyed>)>,
+    parents: Query<&ChildOf, Without<ColliderCell>>,
+    levels: Query<(Entity, &LevelIid)>,
+    ldtk_projects: Query<&LdtkProjectHandle>,
+    ldtk_project_assets: Res<Assets<LdtkProject>>,
+) -> Result {
+    warn!("recalculate_level_collisions");
+
+    let existing_colliders = colliders.iter().collect::<Vec<_>>();
+
+    let ldtk_project = ldtk_project_assets
+        .get(ldtk_projects.single()?)
+        .ok_or("Project should be loaded if level has spawned")?
+        .as_standalone();
+
+    let mut level_colliders = LevelColliders::new();
+    collider_cells
+        .iter()
+        // An intgrid tile's direct parent will be a layer entity, not the level entity
+        // To get the level entity, you need the tile's grandparent.
+        // This is where parent_query comes in.
+        .filter_map(|(grid_coords, &ChildOf(layer))| {
+            let ChildOf(level_entity) = parents.get(layer).ok()?;
+            Some((level_entity, grid_coords))
+        })
+        .for_each(|(&level_entity, &grid_coords)| {
+            level_colliders.add_coord(level_entity, grid_coords);
+        });
+
+    for (level_entity, level_iid) in &levels {
+        let level = ldtk_project
+            .get_loaded_level_by_iid(&level_iid.to_string())
+            .ok_or("Spawned level should exist in LDtk project")?;
+
+        // Spawn colliders for every rectangle..
+        // Making the collider a child of the level serves two purposes:
+        // 1. Adjusts the transforms to be relative to the level for free
+        // 2. the colliders will be despawned automatically when levels unload
+        let layer = level
+            .layer_instances()
+            .get(COLLISIONS_LAYER)
+            .expect("COLLISIONS_LAYER");
+        for rect in level_colliders.rectangles(&level_entity, layer.c_wid, layer.c_hei) {
+            commands.spawn((level_collider(rect, layer.grid_size), ChildOf(level_entity)));
+        }
+    }
+
+    // remove old colliders
+    for e in existing_colliders {
+        commands.entity(e).despawn();
+    }
+
+    Ok(())
 }
