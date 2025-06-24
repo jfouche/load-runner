@@ -1,6 +1,13 @@
 use crate::components::item::Items;
-use bevy::prelude::*;
-use bevy_ecs_ldtk::prelude::*;
+use bevy::{
+    ecs::query::{QueryData, QueryFilter},
+    prelude::*,
+};
+use bevy_ecs_ldtk::{
+    assets::{InternalLevels, LdtkJsonWithMetadata},
+    ldtk::loaded_level::LoadedLevel,
+    prelude::*,
+};
 use bevy_rapier2d::prelude::*;
 use std::collections::{HashMap, HashSet};
 
@@ -101,17 +108,30 @@ pub struct LevelColliders {
 }
 
 impl LevelColliders {
-    pub fn new() -> Self {
+    pub fn new<'s, C, F>(cells: C, parents: &Query<&ChildOf, F>) -> Self
+    where
+        C: IntoIterator<Item = (&'s GridCoords, &'s ChildOf)>,
+        F: QueryFilter,
+    {
+        let mut level_to_colliders_locations = HashMap::<Entity, HashSet<GridCoords>>::new();
+        cells
+            .into_iter()
+            // An intgrid tile's direct parent will be a layer entity, not the level entity
+            // To get the level entity, you need the tile's grandparent.
+            // This is where parent_query comes in.
+            .filter_map(|(grid_coords, &ChildOf(layer))| {
+                let ChildOf(level_entity) = parents.get(layer).ok()?;
+                Some((level_entity, grid_coords))
+            })
+            .for_each(|(&level_entity, &grid_coords)| {
+                level_to_colliders_locations
+                    .entry(level_entity)
+                    .or_default()
+                    .insert(grid_coords);
+            });
         LevelColliders {
-            level_to_colliders_locations: HashMap::new(),
+            level_to_colliders_locations,
         }
-    }
-
-    pub fn add_coord(&mut self, level: Entity, coord: GridCoords) {
-        self.level_to_colliders_locations
-            .entry(level)
-            .or_default()
-            .insert(coord);
     }
 
     /// The algorithm used here is a nice compromise between simplicity, speed,
@@ -201,6 +221,37 @@ pub fn level_collider(rect: IRect, grid_size: i32) -> impl Bundle {
 struct Plate {
     left: i32,
     right: i32,
+}
+
+#[derive(QueryData)]
+pub struct LevelData {
+    pub entity: Entity,
+    pub liid: &'static LevelIid,
+}
+
+impl<'w> LevelDataItem<'w> {
+    pub fn level(
+        &self,
+        ldtk_project: &'w LdtkJsonWithMetadata<InternalLevels>,
+    ) -> Result<LoadedLevel<'w>, BevyError> {
+        ldtk_project
+            .get_loaded_level_by_iid(&self.liid.to_string())
+            .ok_or(BevyError::from(
+                "Spawned level should exist in LDtk project",
+            ))
+    }
+}
+
+pub trait LoadedLevelExt<'a> {
+    fn collision_layer(&'a self) -> Result<&'a LayerInstance, BevyError>;
+}
+
+impl<'a> LoadedLevelExt<'a> for LoadedLevel<'a> {
+    fn collision_layer(&'a self) -> Result<&'a LayerInstance, BevyError> {
+        self.layer_instances()
+            .get(COLLISIONS_LAYER)
+            .ok_or(BevyError::from("Missing Collision"))
+    }
 }
 
 #[derive(Event)]

@@ -5,8 +5,8 @@ use crate::{
         level::{
             level_collider, ColliderCell, Destroyed, Destructible, Door, EndLevel, LdtkDirtCell,
             LdtkDoorBundle, LdtkEndLevelBundle, LdtkLadderCell, LdtkStoneCell, LdtkWaterCell,
-            LevelCollider, LevelColliders, UpdateCollidersEvent, COLLISIONS_LAYER, DIRT_INT_CELL,
-            LADDER_INT_CELL, STONE_INT_CELL, WATER_INT_CELL,
+            LevelCollider, LevelColliders, LevelData, LoadedLevelExt, UpdateCollidersEvent,
+            DIRT_INT_CELL, LADDER_INT_CELL, STONE_INT_CELL, WATER_INT_CELL,
         },
         player::{DigEvent, LdtkPlayerBundle, Player},
     },
@@ -54,7 +54,7 @@ pub fn level_plugin(app: &mut App) {
         .add_systems(OnEnter(InGameState::LevelLoaded), show_level)
         .add_systems(
             Update,
-            spawn_wall_collision.run_if(in_state(GameState::InGame)),
+            initialize_level_collisions.run_if(in_state(GameState::InGame)),
         )
         // InGame
         .add_systems(
@@ -161,11 +161,11 @@ fn wait_for_end_of_level_loading(
 ///
 /// Instead, by flagging the wall tiles and spawning the collisions later,
 /// we can minimize the amount of colliding entities.
-fn spawn_wall_collision(
+fn initialize_level_collisions(
     mut commands: Commands,
     collider_cells: Query<(&GridCoords, &ChildOf), Added<ColliderCell>>,
     parents: Query<&ChildOf, Without<ColliderCell>>,
-    levels: Query<(Entity, &LevelIid)>,
+    levels: Query<LevelData>,
     ldtk_projects: Query<&LdtkProjectHandle>,
     ldtk_project_assets: Res<Assets<LdtkProject>>,
 ) -> Result {
@@ -178,35 +178,15 @@ fn spawn_wall_collision(
         .ok_or("Project should be loaded if level has spawned")?
         .as_standalone();
 
-    let mut level_colliders = LevelColliders::new();
-    collider_cells
-        .iter()
-        // An intgrid tile's direct parent will be a layer entity, not the level entity
-        // To get the level entity, you need the tile's grandparent.
-        // This is where parent_query comes in.
-        .filter_map(|(grid_coords, &ChildOf(layer))| {
-            let ChildOf(level_entity) = parents.get(layer).ok()?;
-            Some((level_entity, grid_coords))
-        })
-        .for_each(|(&level_entity, &grid_coords)| {
-            level_colliders.add_coord(level_entity, grid_coords);
-        });
-
-    for (level_entity, level_iid) in &levels {
-        let level = ldtk_project
-            .get_loaded_level_by_iid(&level_iid.to_string())
-            .ok_or("Spawned level should exist in LDtk project")?;
-
-        // Spawn colliders for every rectangle..
-        // Making the collider a child of the level serves two purposes:
-        // 1. Adjusts the transforms to be relative to the level for free
-        // 2. the colliders will be despawned automatically when levels unload
-        let layer = level
-            .layer_instances()
-            .get(COLLISIONS_LAYER)
-            .expect("COLLISIONS_LAYER");
-        for rect in level_colliders.rectangles(&level_entity, layer.c_wid, layer.c_hei) {
-            commands.spawn((level_collider(rect, layer.grid_size), ChildOf(level_entity)));
+    let level_colliders = LevelColliders::new(collider_cells, &parents);
+    for level_data in &levels {
+        let level = level_data.level(ldtk_project)?;
+        let layer = level.collision_layer()?;
+        for rect in level_colliders.rectangles(&level_data.entity, layer.c_wid, layer.c_hei) {
+            commands.spawn((
+                level_collider(rect, layer.grid_size),
+                ChildOf(level_data.entity),
+            ));
         }
     }
     Ok(())
@@ -323,7 +303,7 @@ fn recalculate_level_collisions(
     colliders: Query<Entity, With<LevelCollider>>,
     collider_cells: Query<(&GridCoords, &ChildOf), (With<ColliderCell>, Without<Destroyed>)>,
     parents: Query<&ChildOf, Without<ColliderCell>>,
-    levels: Query<(Entity, &LevelIid)>,
+    levels: Query<LevelData>,
     ldtk_projects: Query<&LdtkProjectHandle>,
     ldtk_project_assets: Res<Assets<LdtkProject>>,
 ) -> Result {
@@ -336,35 +316,15 @@ fn recalculate_level_collisions(
         .ok_or("Project should be loaded if level has spawned")?
         .as_standalone();
 
-    let mut level_colliders = LevelColliders::new();
-    collider_cells
-        .iter()
-        // An intgrid tile's direct parent will be a layer entity, not the level entity
-        // To get the level entity, you need the tile's grandparent.
-        // This is where parent_query comes in.
-        .filter_map(|(grid_coords, &ChildOf(layer))| {
-            let ChildOf(level_entity) = parents.get(layer).ok()?;
-            Some((level_entity, grid_coords))
-        })
-        .for_each(|(&level_entity, &grid_coords)| {
-            level_colliders.add_coord(level_entity, grid_coords);
-        });
-
-    for (level_entity, level_iid) in &levels {
-        let level = ldtk_project
-            .get_loaded_level_by_iid(&level_iid.to_string())
-            .ok_or("Spawned level should exist in LDtk project")?;
-
-        // Spawn colliders for every rectangle..
-        // Making the collider a child of the level serves two purposes:
-        // 1. Adjusts the transforms to be relative to the level for free
-        // 2. the colliders will be despawned automatically when levels unload
-        let layer = level
-            .layer_instances()
-            .get(COLLISIONS_LAYER)
-            .expect("COLLISIONS_LAYER");
-        for rect in level_colliders.rectangles(&level_entity, layer.c_wid, layer.c_hei) {
-            commands.spawn((level_collider(rect, layer.grid_size), ChildOf(level_entity)));
+    let level_colliders = LevelColliders::new(collider_cells, &parents);
+    for level_data in &levels {
+        let level = level_data.level(ldtk_project)?;
+        let layer = level.collision_layer()?;
+        for rect in level_colliders.rectangles(&level_data.entity, layer.c_wid, layer.c_hei) {
+            commands.spawn((
+                level_collider(rect, layer.grid_size),
+                ChildOf(level_data.entity),
+            ));
         }
     }
 
